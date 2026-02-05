@@ -3,18 +3,29 @@
  * Single instance for entire application
  */
 
-// @ts-expect-error - PrismaClient will be available after running prisma generate with a connected database
 import { PrismaClient } from '@prisma/client'
+import { PrismaPg } from '@prisma/adapter-pg'
+import pg from 'pg'
+import { env } from './env'
+
+const { Pool } = pg
+
+// Create a connection pool
+const pool = new Pool({ connectionString: env.DATABASE_URL })
+
+// Create the Prisma Postgres adapter
+const adapter = new PrismaPg(pool)
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient }
 
 export const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
-    log: ['query', 'error', 'warn'],
+    adapter,
+    log: env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
   })
 
-if (process.env.NODE_ENV !== 'production') {
+if (env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma
 }
 

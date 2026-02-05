@@ -5,7 +5,7 @@
   "main": "dist/src/index.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon --exec ts-node src/index.ts",
+    "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/src/index.js",
     "lint": "eslint src",
@@ -32,12 +32,14 @@
   },
   "homepage": "https://github.com/dzulfikriAlfik/walletwise-backend#readme",
   "dependencies": {
+    "@prisma/adapter-pg": "^7.3.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
+    "pg": "^8.18.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -54,6 +56,7 @@
     "prettier": "^3.8.1",
     "prisma": "^7.3.0",
     "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }
 }
