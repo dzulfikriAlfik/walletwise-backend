@@ -27,9 +27,26 @@ export class AuthController {
       // Register user
       const result = await authService.register(validationResult.data)
 
+      // Set httpOnly cookies
+      res.cookie('accessToken', result.accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 15 * 60 * 1000, // 15 minutes
+      })
+
+      res.cookie('refreshToken', result.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      })
+
       res.status(201).json({
         success: true,
-        data: result,
+        data: {
+          user: result.user,
+        },
       })
     } catch (error) {
       next(error)
@@ -53,9 +70,26 @@ export class AuthController {
       // Login user
       const result = await authService.login(validationResult.data)
 
+      // Set httpOnly cookies
+      res.cookie('accessToken', result.accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 15 * 60 * 1000, // 15 minutes
+      })
+
+      res.cookie('refreshToken', result.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      })
+
       res.status(200).json({
         success: true,
-        data: result,
+        data: {
+          user: result.user,
+        },
       })
     } catch (error) {
       next(error)
@@ -68,20 +102,27 @@ export class AuthController {
    */
   async refreshToken(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      // Validate request body
-      const validationResult = refreshTokenSchema.safeParse(req.body)
+      // Get refresh token from cookie
+      const refreshToken = req.cookies.refreshToken
 
-      if (!validationResult.success) {
-        const errors = formatZodErrors(validationResult.error)
-        throw new ValidationError('Validation failed', errors)
+      if (!refreshToken) {
+        throw new ValidationError('Refresh token not found')
       }
 
       // Refresh token
-      const result = await authService.refreshToken(validationResult.data.refreshToken)
+      const result = await authService.refreshToken(refreshToken)
+
+      // Set new access token cookie
+      res.cookie('accessToken', result.accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 15 * 60 * 1000, // 15 minutes
+      })
 
       res.status(200).json({
         success: true,
-        data: result,
+        message: 'Token refreshed successfully',
       })
     } catch (error) {
       next(error)
@@ -144,8 +185,10 @@ export class AuthController {
    */
   async logout(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      // Just return success - token is cleared on frontend
-      // In production, you might want to blacklist the token
+      // Clear cookies
+      res.clearCookie('accessToken')
+      res.clearCookie('refreshToken')
+
       res.status(200).json({
         success: true,
         message: 'Logged out successfully',

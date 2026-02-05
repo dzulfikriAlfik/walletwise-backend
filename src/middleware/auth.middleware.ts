@@ -20,28 +20,16 @@ declare global {
 }
 
 /**
- * Verify JWT token from Authorization header
+ * Verify JWT token from httpOnly cookie
  * Attaches user payload to request object
  */
 export const verifyToken = (req: Request, _res: Response, next: NextFunction): void => {
   try {
-    // Get token from Authorization header
-    const authHeader = req.headers.authorization
-
-    if (!authHeader) {
-      throw new AuthenticationError('Authorization header missing')
-    }
-
-    // Check if it's a Bearer token
-    if (!authHeader.startsWith('Bearer ')) {
-      throw new AuthenticationError('Invalid authorization format. Use Bearer <token>')
-    }
-
-    // Extract token
-    const token = authHeader.substring(7) // Remove 'Bearer ' prefix
+    // Get token from cookie
+    const token = req.cookies.accessToken
 
     if (!token) {
-      throw new AuthenticationError('Token missing')
+      throw new AuthenticationError('Access token missing')
     }
 
     // Verify token
@@ -69,13 +57,7 @@ export const verifyToken = (req: Request, _res: Response, next: NextFunction): v
  */
 export const optionalAuth = (req: Request, _res: Response, next: NextFunction): void => {
   try {
-    const authHeader = req.headers.authorization
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return next()
-    }
-
-    const token = authHeader.substring(7)
+    const token = req.cookies.accessToken
 
     if (!token) {
       return next()
