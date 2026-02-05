@@ -12,9 +12,16 @@ import bcrypt from 'bcryptjs'
 const { Pool } = pg
 
 async function main() {
-  const pool = new Pool({ 
-    connectionString: process.env.DATABASE_URL 
-  })
+  // Build connection string from env components
+  const dbUser = process.env.DB_USER || 'dzulfikri'
+  const dbPassword = process.env.DB_PASSWORD || ''
+  const dbHost = process.env.DB_HOST || 'localhost'
+  const dbPort = process.env.DB_PORT || '5432'
+  const dbName = process.env.DB_NAME || 'walletwise_dev'
+  
+  const connectionString = `postgresql://${dbUser}${dbPassword ? ':' + dbPassword : ''}@${dbHost}:${dbPort}/${dbName}`
+  
+  const pool = new Pool({ connectionString })
   
   const adapter = new PrismaPg(pool)
   const prisma = new PrismaClient({ adapter })

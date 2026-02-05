@@ -4,11 +4,11 @@
  */
 
 const getEnv = (key: string, defaultValue?: string): string => {
-  const value = process.env[key] ?? defaultValue
-  if (!value && !defaultValue) {
+  const value = process.env[key]
+  if (value === undefined && defaultValue === undefined) {
     throw new Error(`Missing required environment variable: ${key}`)
   }
-  return value || ''
+  return value ?? defaultValue ?? ''
 }
 
 export const env = {
@@ -17,7 +17,11 @@ export const env = {
   PORT: parseInt(getEnv('PORT', '3000'), 10),
   
   // Database
-  DATABASE_URL: getEnv('DATABASE_URL'),
+  DB_HOST: getEnv('DB_HOST', 'localhost'),
+  DB_PORT: parseInt(getEnv('DB_PORT', '5432'), 10),
+  DB_USER: getEnv('DB_USER'),
+  DB_PASSWORD: getEnv('DB_PASSWORD', ''),
+  DB_NAME: getEnv('DB_NAME'),
   
   // JWT
   JWT_SECRET: getEnv('JWT_SECRET'),

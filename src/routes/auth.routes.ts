@@ -41,4 +41,10 @@ router.patch('/profile', verifyToken, (req, res, next) =>
   authController.updateProfile(req, res, next)
 )
 
+// Logout user
+// POST /api/auth/logout
+router.post('/logout', verifyToken, (req, res, next) =>
+  authController.logout(req, res, next)
+)
+
 export default router

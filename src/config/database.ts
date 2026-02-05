@@ -10,8 +10,11 @@ import { env } from './env'
 
 const { Pool } = pg
 
+// Build connection string from components
+const connectionString = `postgresql://${env.DB_USER}${env.DB_PASSWORD ? ':' + env.DB_PASSWORD : ''}@${env.DB_HOST}:${env.DB_PORT}/${env.DB_NAME}`
+
 // Create a connection pool
-const pool = new Pool({ connectionString: env.DATABASE_URL })
+const pool = new Pool({ connectionString })
 
 // Create the Prisma Postgres adapter
 const adapter = new PrismaPg(pool)

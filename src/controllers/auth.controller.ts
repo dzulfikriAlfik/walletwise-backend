@@ -137,6 +137,23 @@ export class AuthController {
       next(error)
     }
   }
+
+  /**
+   * Logout user
+   * POST /api/auth/logout
+   */
+  async logout(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      // Just return success - token is cleared on frontend
+      // In production, you might want to blacklist the token
+      res.status(200).json({
+        success: true,
+        message: 'Logged out successfully',
+      })
+    } catch (error) {
+      next(error)
+    }
+  }
 }
 
 export const authController = new AuthController()
