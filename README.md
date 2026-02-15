@@ -1,91 +1,59 @@
 # WalletWise Backend
 
-## 📋 Overview
+RESTful API untuk aplikasi expense tracking SaaS WalletWise.
 
-WalletWise Backend adalah RESTful API untuk aplikasi expense tracking SaaS yang dibangun dengan:
-
-- **Express.js** - Lightweight, flexible Node.js framework
-- **TypeScript** - Type-safe development
-- **Prisma ORM** - Modern, type-safe database ORM
-- **PostgreSQL** - Production-grade database
-- **JWT Authentication** - Secure token-based auth
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Node.js 18+
-- PostgreSQL 12+
-- npm or yarn
-
-### Installation
-
-```bash
-# Install dependencies
-npm install
-
-# Setup environment variables
-cp .env.example .env
-
-# Update .env with your database credentials
-# Then run migrations:
-npm run prisma:migrate
-
-# Start development server
-npm run dev
-```
-
-Server akan run di `http://localhost:3000`
-
-## 📁 Project Structure
+## System Design Diagram
 
 ```
-src/
-├── config/              # Configuration files
-│   ├── database.ts     # Prisma client setup
-│   └── env.ts          # Environment variables validation
-├── controllers/         # Request handlers
-│   ├── auth.controller.ts
-│   ├── wallet.controller.ts
-│   └── transaction.controller.ts
-├── services/            # Business logic
-│   ├── auth.service.ts
-│   ├── wallet.service.ts
-│   └── transaction.service.ts
-├── middleware/          # Express middleware
-│   ├── auth.middleware.ts
-│   ├── error.middleware.ts
-│   └── validation.middleware.ts
-├── routes/              # API routes
-│   ├── auth.routes.ts
-│   ├── wallet.routes.ts
-│   └── transaction.routes.ts
-├── schemas/             # Zod validation schemas
-│   ├── auth.schemas.ts
-│   ├── wallet.schemas.ts
-│   └── transaction.schemas.ts
-├── types/               # TypeScript types
-│   └── index.ts
-├── utils/               # Utility functions
-│   ├── jwt.ts
-│   ├── errors.ts
-│   └── logger.ts
-└── index.ts            # Application entry point
+┌─────────────────────────────────────────────────────────────────┐
+│                     WalletWise Backend (Express API)               │
+├─────────────────────────────────────────────────────────────────┤
+│  Routes                                                           │
+│  ├── /api/auth     (register, login, profile)                     │
+│  ├── /api/wallets  (CRUD wallets)                                 │
+│  └── /api/transactions (CRUD transactions)                        │
+├─────────────────────────────────────────────────────────────────┤
+│  Middleware                                                       │
+│  ├── auth.middleware (JWT validation)                             │
+│  ├── validation.middleware (Zod schemas)                          │
+│  └── error.middleware                                             │
+├─────────────────────────────────────────────────────────────────┤
+│  Prisma ORM ──────────────────────► PostgreSQL                   │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-## 🛠️ Available Scripts
+## Tech Stack
 
-```bash
-npm run dev              # Start development server with hot reload
-npm run build            # Build for production
-npm run start            # Start production server
-npm run lint             # Run ESLint
-npm run format           # Format code with Prettier
-npm run prisma:generate  # Generate Prisma client
-npm run prisma:migrate   # Run database migrations
-npm run prisma:studio    # Open Prisma Studio GUI
-```
+| Category | Technology |
+|----------|------------|
+| Runtime | Node.js |
+| Framework | Express.js 5 |
+| Language | TypeScript |
+| ORM | Prisma |
+| Database | PostgreSQL |
+| Auth | JWT (jsonwebtoken) |
+| Validation | Zod |
+| Security | Helmet, bcryptjs |
 
-## 📚 API Documentation
+## Feature List
+
+### Core Features
+- User registration & login
+- JWT authentication with refresh tokens
+- Wallet CRUD (create, read, update, delete)
+- Transaction management
+- Subscription tier (free vs pro)
+
+### Subscription Rules
+- Free users: up to 3 wallets
+- Pro users: unlimited wallets
+- Subscription logic mocked for demo
+
+## API Documentation
+
+### Base URL
+- **Local:** `http://localhost:3000/api`
+- **Production:** `_Add base URL when deployed_`
 
 ### Authentication
 
@@ -191,50 +159,73 @@ Authorization: Bearer <accessToken>
 Response: 204
 ```
 
-## 🔐 Security
+## How to Run Locally
 
-- Password hashing dengan bcryptjs
-- JWT token-based authentication
-- Refresh token rotation
-- CORS configuration
-- Helmet security headers
-- Input validation dengan Zod
-- Rate limiting (to be added)
+### Prerequisites
+- Node.js 18+
+- PostgreSQL 12+
+- npm or yarn
 
-## 🗄️ Database Schema
+### Installation
 
-See `prisma/schema.prisma` for detailed schema.
+```bash
+# Install dependencies
+npm install
 
-### Key Tables:
-- `users` - User accounts
-- `subscriptions` - Subscription tier info
-- `wallets` - User wallets
-- `transactions` - Income/expense transactions
+# Copy environment file
+cp .env.example .env
 
-## 📝 Environment Variables
+# Edit .env with your database credentials
+# DATABASE_URL="postgresql://user:password@localhost:5432/walletwise"
+# JWT_SECRET="your-secret-key"
 
-Lihat `.env.example` untuk semua variabel yang diperlukan.
+# Run migrations
+npm run prisma:migrate
 
-Penting:
-- `DATABASE_URL` - PostgreSQL connection string
-- `JWT_SECRET` - Secret key untuk signing tokens
-- `NODE_ENV` - development / production
+# Start development server
+npm run dev
+```
 
-## 🤝 Contributing
+Server runs at `http://localhost:3000`
 
-1. Buat feature branch (`git checkout -b feature/amazing-feature`)
-2. Commit changes (`git commit -m 'feat: add amazing feature'`)
-3. Push ke branch (`git push origin feature/amazing-feature`)
-4. Open a Pull Request
+### Available Scripts
+```bash
+npm run dev              # Start with hot reload
+npm run build            # Build for production
+npm run start            # Run production build
+npm run prisma:generate  # Generate Prisma client
+npm run prisma:migrate   # Run migrations
+npm run prisma:studio    # Open Prisma Studio
+```
+
+### Environment Variables
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `JWT_SECRET` | Secret for signing tokens |
+| `NODE_ENV` | `development` or `production` |
+
+## Deployment Link
+
+<!-- Add your deployed backend URL here, e.g. https://api.walletwise.com -->
+- **Production:** _Add deployment link when ready_
+- **Staging:** _Add staging link when ready_
+
+---
+
+## 📁 Project Structure
+
+```
+src/
+├── config/              # Configuration
+├── controllers/         # Request handlers
+├── services/            # Business logic
+├── middleware/          # Auth, validation, error
+├── routes/              # API routes
+├── schemas/             # Zod validation
+└── index.ts             # Entry point
+```
 
 ## 📄 License
 
-MIT License - lihat LICENSE file untuk details.
-
-## 👥 Author
-
-Dibuat oleh: Your Name (GitHub: @dzulfikriAlfik)
-
-## 🆘 Support
-
-Untuk pertanyaan atau issues, buka GitHub Issues.
+MIT License
