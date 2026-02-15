@@ -33,16 +33,17 @@ model User {
 }
 
 model Subscription {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tier      String   @default("free") // 'free' or 'pro'
-  isActive  Boolean  @default(true)
-  startDate DateTime @default(now())
-  endDate   DateTime?
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tier        String    @default("free") // 'free' | 'pro' | 'pro_plus'
+  isActive    Boolean   @default(true)
+  startDate   DateTime  @default(now())
+  endDate     DateTime? // When subscription expires (for paid plans)
+  trialEndDate DateTime? // When Pro free trial ends (7 days from upgrade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@map("subscriptions")
 }
