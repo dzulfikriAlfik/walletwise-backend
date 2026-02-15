@@ -22,6 +22,14 @@ export const env = {
   DB_USER: getEnv('DB_USER'),
   DB_PASSWORD: getEnv('DB_PASSWORD', ''),
   DB_NAME: getEnv('DB_NAME'),
+
+  // DATABASE_URL: prefer explicit, else build from components (for Prisma migrate)
+  get DATABASE_URL() {
+    if (process.env['DATABASE_URL']) return process.env['DATABASE_URL']
+    const password = getEnv('DB_PASSWORD', '')
+    const creds = password ? `${getEnv('DB_USER')}:${password}` : getEnv('DB_USER')
+    return `postgresql://${creds}@${getEnv('DB_HOST', 'localhost')}:${parseInt(getEnv('DB_PORT', '5432'), 10)}/${getEnv('DB_NAME')}`
+  },
   
   // JWT
   JWT_SECRET: getEnv('JWT_SECRET'),
