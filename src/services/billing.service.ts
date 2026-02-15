@@ -63,14 +63,12 @@ export class BillingService {
         isActive: true,
         startDate: now,
         endDate,
-        trialEndDate,
       },
       update: {
         tier: input.targetTier,
         isActive: true,
         startDate: now,
         endDate,
-        trialEndDate,
       },
     })
 
@@ -89,7 +87,7 @@ export class BillingService {
         isActive: updated.isActive,
         startDate: updated.startDate,
         endDate: updated.endDate,
-        trialEndDate: updated.trialEndDate,
+        trialEndDate: input.useTrial ? trialEndDate : null,
       },
       payment: {
         amount: input.useTrial ? 0 : price,
