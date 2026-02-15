@@ -10,7 +10,7 @@ import cookieParser from 'cookie-parser'
 import { env } from '@/config/env'
 import { errorHandler } from '@/middleware/error.middleware'
 import { requestLogger } from '@/middleware/logger.middleware'
-import { authRoutes, walletRoutes, transactionRoutes } from '@/routes'
+import { authRoutes, walletRoutes, transactionRoutes, billingRoutes } from '@/routes'
 
 const app = express()
 
@@ -34,6 +34,7 @@ app.get('/health', (_req, res) => {
 app.use('/api/auth', authRoutes)
 app.use('/api/wallets', walletRoutes)
 app.use('/api/transactions', transactionRoutes)
+app.use('/api/billing', billingRoutes)
 
 // 404 handler
 app.use((req, res) => {

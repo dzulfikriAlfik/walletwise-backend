@@ -204,6 +204,7 @@ export class AuthService {
         isActive: user.subscription?.isActive || false,
         startDate: user.subscription?.startDate || user.createdAt,
         endDate: user.subscription?.endDate || null,
+        trialEndDate: user.subscription?.trialEndDate || null,
       },
       createdAt: user.createdAt,
     }
@@ -237,6 +238,7 @@ export class AuthService {
         isActive: user.subscription?.isActive || false,
         startDate: user.subscription?.startDate || user.createdAt,
         endDate: user.subscription?.endDate || null,
+        trialEndDate: user.subscription?.trialEndDate || null,
       },
       createdAt: user.createdAt,
     }

@@ -4,6 +4,8 @@
  */
 
 import { prisma } from '@/config/database'
+import { WALLET_LIMITS } from '@/constants/subscription'
+import type { SubscriptionTier } from '@/constants/subscription'
 import { NotFoundError, ConflictError, AuthorizationError } from '@/utils/errors'
 import type { CreateWalletInput, UpdateWalletInput } from '@/schemas/wallet.schemas'
 
@@ -65,17 +67,17 @@ export class WalletService {
       throw new NotFoundError('User')
     }
 
-    // Check wallet limit based on subscription
+    // Check wallet limit based on subscription (free: 3, pro/pro_plus: unlimited)
     const walletCount = await prisma.wallet.count({
       where: { userId },
     })
 
-    const tier = user.subscription?.tier || 'free'
-    const maxWallets = tier === 'pro' ? Infinity : 3
+    const tier = (user.subscription?.tier || 'free') as SubscriptionTier
+    const maxWallets = WALLET_LIMITS[tier] ?? 3
 
-    if (walletCount >= maxWallets) {
+    if (maxWallets !== null && walletCount >= maxWallets) {
       throw new AuthorizationError(
-        `Wallet limit reached. ${tier === 'free' ? 'Upgrade to Pro for unlimited wallets' : ''}`
+        `Wallet limit reached (${maxWallets}). Upgrade to Pro for unlimited wallets.`
       )
     }
 
