@@ -5,6 +5,7 @@
 
 import { prisma } from '@/config/database'
 import { AuthorizationError, ValidationError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 import {
   WALLET_LIMITS,
   PRO_TRIAL_DAYS,
@@ -18,6 +19,7 @@ export class BillingService {
    * Upgrade subscription (dummy payment - simulates successful payment)
    */
   async upgradeSubscription(userId: string, input: UpgradeSubscriptionInput) {
+    logger.info('Billing operation: upgradeSubscription', { userId, targetTier: input.targetTier, billingPeriod: input.billingPeriod, useTrial: input.useTrial })
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: { subscription: true },
@@ -102,6 +104,7 @@ export class BillingService {
    * Get subscription plans (for display)
    */
   getPlans() {
+    logger.info('Billing operation: getPlans')
     return {
       free: {
         tier: 'free',

@@ -1,5 +1,6 @@
 /**
  * Request logger middleware
+ * Logs every HTTP request with method, path, status, duration
  */
 
 import { Request, Response, NextFunction } from 'express'
@@ -10,7 +11,8 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction): 
 
   res.on('finish', () => {
     const duration = Date.now() - start
-    logger.debug(`${req.method} ${req.path} - ${res.statusCode} (${duration}ms)`)
+    const meta = { method: req.method, path: req.path, status: res.statusCode, durationMs: duration }
+    logger.info('Request', meta)
   })
 
   next()

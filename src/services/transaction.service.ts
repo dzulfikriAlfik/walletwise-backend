@@ -5,6 +5,7 @@
 
 import { prisma } from '@/config/database'
 import { NotFoundError, AuthorizationError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 import type { CreateTransactionInput, UpdateTransactionInput } from '@/schemas/transaction.schemas'
 
 interface TransactionFilters {
@@ -32,6 +33,7 @@ export class TransactionService {
    * Get all transactions for a user with optional filters
    */
   async getAll(userId: string, filters?: TransactionFilters) {
+    logger.info('Transaction operation: getAll', { userId, filters: filters ? Object.keys(filters) : [] })
     const where: any = { userId }
 
     if (filters?.walletId) {
@@ -77,6 +79,7 @@ export class TransactionService {
    * Get a single transaction by ID
    */
   async getById(userId: string, transactionId: string) {
+    logger.info('Transaction operation: getById', { userId, transactionId })
     const transaction = await prisma.transaction.findUnique({
       where: { id: transactionId },
       include: {
@@ -106,6 +109,7 @@ export class TransactionService {
    * Create a new transaction
    */
   async create(userId: string, data: CreateTransactionInput) {
+    logger.info('Transaction operation: create', { userId, walletId: data.walletId, type: data.type, amount: data.amount })
     // Verify wallet exists and belongs to user
     const wallet = await prisma.wallet.findUnique({
       where: { id: data.walletId },
@@ -163,6 +167,7 @@ export class TransactionService {
    * Update a transaction
    */
   async update(userId: string, transactionId: string, data: UpdateTransactionInput) {
+    logger.info('Transaction operation: update', { userId, transactionId, fields: Object.keys(data) })
     // Get existing transaction
     const existingTransaction = await this.getById(userId, transactionId)
 
@@ -229,6 +234,7 @@ export class TransactionService {
    * Delete a transaction
    */
   async delete(userId: string, transactionId: string) {
+    logger.info('Transaction operation: delete', { userId, transactionId })
     // Get existing transaction
     const transaction = await this.getById(userId, transactionId)
 
@@ -262,6 +268,7 @@ export class TransactionService {
    * Get transaction summary
    */
   async getSummary(userId: string, filters?: TransactionFilters): Promise<TransactionSummary> {
+    logger.info('Transaction operation: getSummary', { userId, filters: filters ? Object.keys(filters) : [] })
     const where: any = { userId }
 
     if (filters?.walletId) {

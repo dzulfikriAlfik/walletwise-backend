@@ -7,6 +7,7 @@ import bcrypt from 'bcryptjs'
 import { prisma } from '@/config/database'
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '@/utils/jwt'
 import { AuthenticationError, ConflictError, NotFoundError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 import type { RegisterInput, LoginInput } from '@/schemas/auth.schemas'
 
 interface AuthResponse {
@@ -44,6 +45,7 @@ export class AuthService {
    * Register a new user
    */
   async register(data: RegisterInput): Promise<AuthResponse> {
+    logger.info('Auth operation: register', { email: data.email })
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
       where: { email: data.email },
@@ -105,6 +107,7 @@ export class AuthService {
    * Login user
    */
   async login(data: LoginInput): Promise<AuthResponse> {
+    logger.info('Auth operation: login', { email: data.email })
     // Find user
     const user = await prisma.user.findUnique({
       where: { email: data.email },
@@ -155,6 +158,7 @@ export class AuthService {
    * Refresh access token
    */
   async refreshToken(refreshToken: string): Promise<{ accessToken: string }> {
+    logger.info('Auth operation: refreshToken')
     try {
       // Verify refresh token
       const payload = verifyRefreshToken(refreshToken)
@@ -184,6 +188,7 @@ export class AuthService {
    * Get user profile
    */
   async getProfile(userId: string): Promise<UserProfile> {
+    logger.info('Auth operation: getProfile', { userId })
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -219,6 +224,7 @@ export class AuthService {
     userId: string,
     data: { name?: string; avatarUrl?: string }
   ): Promise<UserProfile> {
+    logger.info('Auth operation: updateProfile', { userId, fields: Object.keys(data) })
     const user = await prisma.user.update({
       where: { id: userId },
       data: {

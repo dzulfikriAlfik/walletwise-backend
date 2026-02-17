@@ -12,8 +12,7 @@ export const errorHandler = (
   res: Response,
   _next: NextFunction
 ): void => {
-  logger.error(`Error on ${req.method} ${req.path}`, error.message)
-  console.error('Full error:', error)
+  logger.error('Request error', { method: req.method, path: req.path, message: error.message })
 
   if (error instanceof AppError) {
     res.status(error.statusCode).json({

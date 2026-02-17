@@ -7,6 +7,7 @@ import { prisma } from '@/config/database'
 import { WALLET_LIMITS } from '@/constants/subscription'
 import type { SubscriptionTier } from '@/constants/subscription'
 import { NotFoundError, ConflictError, AuthorizationError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 import type { CreateWalletInput, UpdateWalletInput } from '@/schemas/wallet.schemas'
 
 interface WalletSummary {
@@ -25,6 +26,7 @@ export class WalletService {
    * Get all wallets for a user
    */
   async getAll(userId: string) {
+    logger.info('Wallet operation: getAll', { userId })
     const wallets = await prisma.wallet.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
@@ -37,6 +39,7 @@ export class WalletService {
    * Get a single wallet by ID
    */
   async getById(userId: string, walletId: string) {
+    logger.info('Wallet operation: getById', { userId, walletId })
     const wallet = await prisma.wallet.findUnique({
       where: { id: walletId },
     })
@@ -57,6 +60,7 @@ export class WalletService {
    * Create a new wallet
    */
   async create(userId: string, data: CreateWalletInput) {
+    logger.info('Wallet operation: create', { userId, name: data.name, currency: data.currency })
     // Check user's subscription tier
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -114,6 +118,7 @@ export class WalletService {
    * Update a wallet
    */
   async update(userId: string, walletId: string, data: UpdateWalletInput) {
+    logger.info('Wallet operation: update', { userId, walletId, fields: Object.keys(data) })
     // Check if wallet exists and belongs to user
     const existingWallet = await this.getById(userId, walletId)
 
@@ -151,6 +156,7 @@ export class WalletService {
    * Delete a wallet
    */
   async delete(userId: string, walletId: string) {
+    logger.info('Wallet operation: delete', { userId, walletId })
     // Check if wallet exists and belongs to user
     await this.getById(userId, walletId)
 
@@ -166,6 +172,7 @@ export class WalletService {
    * Get wallet summary
    */
   async getSummary(userId: string): Promise<WalletSummary> {
+    logger.info('Wallet operation: getSummary', { userId })
     const wallets = await prisma.wallet.findMany({
       where: { userId },
       select: {
