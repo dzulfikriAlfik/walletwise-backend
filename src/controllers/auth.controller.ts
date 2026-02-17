@@ -5,7 +5,7 @@
 
 import type { Request, Response, NextFunction } from 'express'
 import { authService } from '@/services/auth.service'
-import { registerSchema, loginSchema, refreshTokenSchema } from '@/schemas/auth.schemas'
+import { registerSchema, loginSchema } from '@/schemas/auth.schemas'
 import { ValidationError } from '@/utils/errors'
 import { formatZodErrors } from '@/utils/validation'
 
@@ -183,7 +183,7 @@ export class AuthController {
    * Logout user
    * POST /api/auth/logout
    */
-  async logout(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async logout(_req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       // Clear cookies
       res.clearCookie('accessToken')

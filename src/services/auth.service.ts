@@ -34,6 +34,7 @@ interface UserProfile {
     isActive: boolean
     startDate: Date
     endDate: Date | null
+    trialEndDate: Date | null
   }
   createdAt: Date
 }
@@ -194,17 +195,18 @@ export class AuthService {
       throw new NotFoundError('User')
     }
 
+    const sub = user.subscription
     return {
       id: user.id,
       email: user.email,
       name: user.name,
       avatarUrl: user.avatarUrl,
       subscription: {
-        tier: user.subscription?.tier || 'free',
-        isActive: user.subscription?.isActive || false,
-        startDate: user.subscription?.startDate || user.createdAt,
-        endDate: user.subscription?.endDate || null,
-        trialEndDate: user.subscription?.trialEndDate || null,
+        tier: sub?.tier || 'free',
+        isActive: sub?.isActive || false,
+        startDate: sub?.startDate || user.createdAt,
+        endDate: sub?.endDate ?? null,
+        trialEndDate: (sub as { trialEndDate?: Date | null })?.trialEndDate ?? null,
       },
       createdAt: user.createdAt,
     }
@@ -228,17 +230,18 @@ export class AuthService {
       },
     })
 
+    const sub = user.subscription
     return {
       id: user.id,
       email: user.email,
       name: user.name,
       avatarUrl: user.avatarUrl,
       subscription: {
-        tier: user.subscription?.tier || 'free',
-        isActive: user.subscription?.isActive || false,
-        startDate: user.subscription?.startDate || user.createdAt,
-        endDate: user.subscription?.endDate || null,
-        trialEndDate: user.subscription?.trialEndDate || null,
+        tier: sub?.tier || 'free',
+        isActive: sub?.isActive || false,
+        startDate: sub?.startDate || user.createdAt,
+        endDate: sub?.endDate ?? null,
+        trialEndDate: (sub as { trialEndDate?: Date | null })?.trialEndDate ?? null,
       },
       createdAt: user.createdAt,
     }

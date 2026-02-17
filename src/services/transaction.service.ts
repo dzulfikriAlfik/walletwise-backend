@@ -124,7 +124,7 @@ export class TransactionService {
     const newBalance = wallet.balance + balanceChange
 
     // Create transaction and update wallet balance in a transaction
-    const result = await prisma.$transaction(async (tx: typeof prisma) => {
+    const result = await prisma.$transaction(async (tx) => {
       // Create transaction
       const transaction = await tx.transaction.create({
         data: {
@@ -185,7 +185,7 @@ export class TransactionService {
     }
 
     // Update transaction and wallet balance in a transaction
-    const result = await prisma.$transaction(async (tx: typeof prisma) => {
+    const result = await prisma.$transaction(async (tx) => {
       // Update transaction
       const transaction = await tx.transaction.update({
         where: { id: transactionId },
@@ -238,7 +238,7 @@ export class TransactionService {
       : transaction.amount
 
     // Delete transaction and update wallet balance
-    await prisma.$transaction(async (tx: typeof prisma) => {
+    await prisma.$transaction(async (tx) => {
       // Delete transaction
       await tx.transaction.delete({
         where: { id: transactionId },
