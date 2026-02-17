@@ -7,10 +7,10 @@ import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import cookieParser from 'cookie-parser'
-import { env } from '@/config/env'
-import { errorHandler } from '@/middleware/error.middleware'
-import { requestLogger } from '@/middleware/logger.middleware'
-import { authRoutes, walletRoutes, transactionRoutes, billingRoutes } from '@/routes'
+import { env } from './config/env.js'
+import { errorHandler } from './middleware/error.middleware.js'
+import { requestLogger } from './middleware/logger.middleware.js'
+import { authRoutes, walletRoutes, transactionRoutes, billingRoutes } from './routes/index.js'
 
 const app = express()
 

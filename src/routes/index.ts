@@ -3,9 +3,9 @@
  * Central export for all routes
  */
 
-import authRoutes from './auth.routes'
-import walletRoutes from './wallet.routes'
-import transactionRoutes from './transaction.routes'
-import billingRoutes from './billing.routes'
+import authRoutes from './auth.routes.js'
+import walletRoutes from './wallet.routes.js'
+import transactionRoutes from './transaction.routes.js'
+import billingRoutes from './billing.routes.js'
 
 export { authRoutes, walletRoutes, transactionRoutes, billingRoutes }

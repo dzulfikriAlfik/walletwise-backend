@@ -3,8 +3,8 @@
  */
 
 import { Router } from 'express'
-import { billingController } from '@/controllers/billing.controller'
-import { verifyToken } from '@/middleware/auth.middleware'
+import { billingController } from '../controllers/billing.controller.js'
+import { verifyToken } from '../middleware/auth.middleware.js'
 
 const router = Router()
 

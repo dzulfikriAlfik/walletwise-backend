@@ -3,11 +3,11 @@
  * Bootstrap order: load-env (on import) → connect DB → start server
  */
 
-import { envLoadResult } from '@/config/load-env' // Must be first: loads .env and logs which file
-import { connectDatabase } from '@/config/database'
-import app from '@/app'
-import { env } from '@/config/env'
-import { logger } from '@/utils/logger'
+import { envLoadResult } from './config/load-env.js' // Must be first: loads .env and logs which file
+import { connectDatabase } from './config/database.js'
+import app from './app.js'
+import { env } from './config/env.js'
+import { logger } from './utils/logger.js'
 
 // 1. Env loaded by load-env (already logged); log bootstrap
 logger.info('Env bootstrap', { envFile: envLoadResult.path ?? '(none, process.env only)', nodeEnv: env.NODE_ENV })

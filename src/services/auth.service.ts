@@ -4,11 +4,11 @@
  */
 
 import bcrypt from 'bcryptjs'
-import { prisma } from '@/config/database'
-import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '@/utils/jwt'
-import { AuthenticationError, ConflictError, NotFoundError } from '@/utils/errors'
-import { logger } from '@/utils/logger'
-import type { RegisterInput, LoginInput } from '@/schemas/auth.schemas'
+import { prisma } from '../config/database.js'
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt.js'
+import { AuthenticationError, ConflictError, NotFoundError } from '../utils/errors.js'
+import { logger } from '../utils/logger.js'
+import type { RegisterInput, LoginInput } from '../schemas/auth.schemas.js'
 
 interface AuthResponse {
   user: {

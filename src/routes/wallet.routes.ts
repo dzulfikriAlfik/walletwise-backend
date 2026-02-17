@@ -4,8 +4,8 @@
  */
 
 import { Router } from 'express'
-import { walletController } from '@/controllers/wallet.controller'
-import { verifyToken } from '@/middleware/auth.middleware'
+import { walletController } from '../controllers/wallet.controller.js'
+import { verifyToken } from '../middleware/auth.middleware.js'
 
 const router = Router()
 

@@ -3,16 +3,16 @@
  * Handles subscription upgrades and dummy payment processing
  */
 
-import { prisma } from '@/config/database'
-import { AuthorizationError, ValidationError } from '@/utils/errors'
-import { logger } from '@/utils/logger'
+import { prisma } from '../config/database.js'
+import { AuthorizationError, ValidationError } from '../utils/errors.js'
+import { logger } from '../utils/logger.js'
 import {
   WALLET_LIMITS,
   PRO_TRIAL_DAYS,
   SUBSCRIPTION_PRICES,
   type SubscriptionTier,
-} from '@/constants/subscription'
-import type { UpgradeSubscriptionInput } from '@/schemas/billing.schemas'
+} from '../constants/subscription.js'
+import type { UpgradeSubscriptionInput } from '../schemas/billing.schemas.js'
 
 export class BillingService {
   /**

@@ -4,7 +4,7 @@
  */
 
 import jwt from 'jsonwebtoken'
-import { env } from '@/config/env'
+import { env } from '../config/env.js'
 
 export interface JWTPayload {
   userId: string

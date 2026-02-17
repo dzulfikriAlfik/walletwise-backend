@@ -3,12 +3,12 @@
  * Business logic for wallet management
  */
 
-import { prisma } from '@/config/database'
-import { WALLET_LIMITS } from '@/constants/subscription'
-import type { SubscriptionTier } from '@/constants/subscription'
-import { NotFoundError, ConflictError, AuthorizationError } from '@/utils/errors'
-import { logger } from '@/utils/logger'
-import type { CreateWalletInput, UpdateWalletInput } from '@/schemas/wallet.schemas'
+import { prisma } from '../config/database.js'
+import { WALLET_LIMITS } from '../constants/subscription.js'
+import type { SubscriptionTier } from '../constants/subscription.js'
+import { NotFoundError, ConflictError, AuthorizationError } from '../utils/errors.js'
+import { logger } from '../utils/logger.js'
+import type { CreateWalletInput, UpdateWalletInput } from '../schemas/wallet.schemas.js'
 
 interface WalletSummary {
   totalBalance: number

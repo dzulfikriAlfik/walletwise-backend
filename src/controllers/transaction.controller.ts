@@ -4,10 +4,10 @@
  */
 
 import type { Request, Response, NextFunction } from 'express'
-import { transactionService } from '@/services/transaction.service'
-import { createTransactionSchema, updateTransactionSchema } from '@/schemas/transaction.schemas'
-import { ValidationError } from '@/utils/errors'
-import { formatZodErrors } from '@/utils/validation'
+import { transactionService } from '../services/transaction.service.js'
+import { createTransactionSchema, updateTransactionSchema } from '../schemas/transaction.schemas.js'
+import { ValidationError } from '../utils/errors.js'
+import { formatZodErrors } from '../utils/validation.js'
 
 export class TransactionController {
   /**

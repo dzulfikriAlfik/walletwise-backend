@@ -4,10 +4,10 @@
  */
 
 import type { Request, Response, NextFunction } from 'express'
-import { walletService } from '@/services/wallet.service'
-import { createWalletSchema, updateWalletSchema } from '@/schemas/wallet.schemas'
-import { ValidationError } from '@/utils/errors'
-import { formatZodErrors } from '@/utils/validation'
+import { walletService } from '../services/wallet.service.js'
+import { createWalletSchema, updateWalletSchema } from '../schemas/wallet.schemas.js'
+import { ValidationError } from '../utils/errors.js'
+import { formatZodErrors } from '../utils/validation.js'
 
 export class WalletController {
   /**

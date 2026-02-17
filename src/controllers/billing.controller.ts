@@ -4,10 +4,10 @@
  */
 
 import type { Request, Response, NextFunction } from 'express'
-import { billingService } from '@/services/billing.service'
-import { upgradeSubscriptionSchema, dummyPaymentSchema } from '@/schemas/billing.schemas'
-import { ValidationError } from '@/utils/errors'
-import { formatZodErrors } from '@/utils/validation'
+import { billingService } from '../services/billing.service.js'
+import { upgradeSubscriptionSchema, dummyPaymentSchema } from '../schemas/billing.schemas.js'
+import { ValidationError } from '../utils/errors.js'
+import { formatZodErrors } from '../utils/validation.js'
 
 export class BillingController {
   /**

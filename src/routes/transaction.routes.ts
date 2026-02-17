@@ -4,8 +4,8 @@
  */
 
 import { Router } from 'express'
-import { transactionController } from '@/controllers/transaction.controller'
-import { verifyToken } from '@/middleware/auth.middleware'
+import { transactionController } from '../controllers/transaction.controller.js'
+import { verifyToken } from '../middleware/auth.middleware.js'
 
 const router = Router()
 

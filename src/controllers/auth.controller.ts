@@ -4,10 +4,10 @@
  */
 
 import type { Request, Response, NextFunction } from 'express'
-import { authService } from '@/services/auth.service'
-import { registerSchema, loginSchema } from '@/schemas/auth.schemas'
-import { ValidationError } from '@/utils/errors'
-import { formatZodErrors } from '@/utils/validation'
+import { authService } from '../services/auth.service.js'
+import { registerSchema, loginSchema } from '../schemas/auth.schemas.js'
+import { ValidationError } from '../utils/errors.js'
+import { formatZodErrors } from '../utils/validation.js'
 
 export class AuthController {
   /**

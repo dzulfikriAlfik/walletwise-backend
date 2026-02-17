@@ -3,10 +3,10 @@
  * Business logic for transaction management
  */
 
-import { prisma } from '@/config/database'
-import { NotFoundError, AuthorizationError } from '@/utils/errors'
-import { logger } from '@/utils/logger'
-import type { CreateTransactionInput, UpdateTransactionInput } from '@/schemas/transaction.schemas'
+import { prisma } from '../config/database.js'
+import { NotFoundError, AuthorizationError } from '../utils/errors.js'
+import { logger } from '../utils/logger.js'
+import type { CreateTransactionInput, UpdateTransactionInput } from '../schemas/transaction.schemas.js'
 
 interface TransactionFilters {
   walletId?: string

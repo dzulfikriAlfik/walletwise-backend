@@ -7,8 +7,8 @@
 import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import pg from 'pg'
-import { env } from './env'
-import { logger } from '@/utils/logger'
+import { env } from './env.js'
+import { logger } from '../utils/logger.js'
 
 const { Pool } = pg
 const pool = new Pool({ connectionString: env.DATABASE_URL })
