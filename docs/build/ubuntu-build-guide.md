@@ -75,10 +75,14 @@ CREATE DATABASE walletwise OWNER walletwise_user;
 GRANT ALL PRIVILEGES ON DATABASE walletwise TO walletwise_user;
 
 \c walletwise
-GRANT ALL ON SCHEMA public TO walletwise_user;
+
+-- CRITICAL: PostgreSQL 15+ revoked CREATE on public schema. Prisma migrate needs ownership.
+ALTER SCHEMA public OWNER TO walletwise_user;
 
 \q
 ```
+
+> **Note:** If your `.env` uses a different `DB_USER` (e.g. `user_walletwise`), use that same name in the SQL above instead of `walletwise_user`.
 
 ---
 
@@ -312,6 +316,7 @@ pm2 startup
 | `tsc-alias: not found` | Run `npm install` (include devDependencies), then `npm run build` |
 | `Cannot find package '@/config'` (ERR_MODULE_NOT_FOUND) | Run full `npm run build` (includes tsc-alias). Do not use old dist. |
 | `P1000: Authentication failed` (Prisma migrate) | Verify `.env` matches PostgreSQL. Test: `psql -U walletwise_user -d walletwise -h localhost -W` |
+| `permission denied for schema public` (Prisma migrate) | Run: `sudo -u postgres psql -d walletwise -c "ALTER SCHEMA public OWNER TO walletwise_user;"` — replace `walletwise_user` with your `DB_USER` from `.env` |
 | `Connection refused` (database) | `sudo systemctl status postgresql` |
 | `Environment variable not found` | Ensure `.env` exists with all required variables |
 | Port 3000 already in use | Change `PORT` in `.env` |
