@@ -1,6 +1,6 @@
 # WalletWise Backend — Build on Ubuntu Server
 
-Complete guide for building and running WalletWise backend on Ubuntu server.
+Complete guide for building and running WalletWise backend on Ubuntu server, from scratch.
 
 ---
 
@@ -13,7 +13,7 @@ Complete guide for building and running WalletWise backend on Ubuntu server.
 5. [Environment Configuration](#5-environment-configuration)
 6. [Database Setup](#6-database-setup)
 7. [Build & Run](#7-build--run)
-8. [Production (Optional)](#8-production-optional)
+8. [Production: PM2 & Nginx](#8-production-pm2--nginx)
 
 ---
 
@@ -34,36 +34,22 @@ Complete guide for building and running WalletWise backend on Ubuntu server.
 ### Option A: NodeSource (recommended)
 
 ```bash
-# Update package list
 sudo apt update
-
-# Install curl if not present
 sudo apt install -y curl
-
-# Add Node.js 22.x repository
 curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-
-# Install Node.js
 sudo apt install -y nodejs
 
-# Verify
-node -v   # Should show v22.x.x
+node -v   # v22.x.x
 npm -v
 ```
 
-### Option B: NVM (Node Version Manager)
+### Option B: NVM
 
 ```bash
-# Install NVM
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
 source ~/.bashrc
-
-# Install Node.js 22
 nvm install 22
 nvm use 22
-
-# Verify
-node -v
 ```
 
 ---
@@ -71,32 +57,24 @@ node -v
 ## 3. Install PostgreSQL
 
 ```bash
-# Install PostgreSQL
 sudo apt update
 sudo apt install -y postgresql postgresql-contrib
-
-# Start service
 sudo systemctl start postgresql
 sudo systemctl enable postgresql
+```
 
-# Create user and database (run as postgres user)
+Create user and database:
+
+```bash
 sudo -u postgres psql
 ```
 
-Inside `psql`:
-
 ```sql
--- Create user
 CREATE USER walletwise_user WITH PASSWORD 'your_secure_password';
+CREATE DATABASE walletwise OWNER walletwise_user;
+GRANT ALL PRIVILEGES ON DATABASE walletwise TO walletwise_user;
 
--- Create database
-CREATE DATABASE walletwise_prod OWNER walletwise_user;
-
--- Grant privileges
-GRANT ALL PRIVILEGES ON DATABASE walletwise_prod TO walletwise_user;
-
--- For Prisma migrations (schema ownership)
-\c walletwise_prod
+\c walletwise
 GRANT ALL ON SCHEMA public TO walletwise_user;
 
 \q
@@ -107,16 +85,15 @@ GRANT ALL ON SCHEMA public TO walletwise_user;
 ## 4. Clone & Setup Project
 
 ```bash
-# Create app directory (adjust path as needed)
-sudo mkdir -p /var/www
-sudo chown $USER:$USER /var/www
-cd /var/www
+# Create directory (using domain as folder name)
+sudo mkdir -p /var/www/walletwise-backend.pintarware.com
+sudo chown $USER:$USER /var/www/walletwise-backend.pintarware.com
+cd /var/www/walletwise-backend.pintarware.com
 
-# Clone repository
-git clone https://github.com/dzulfikriAlfik/walletwise-backend.git
-cd walletwise-backend
+# Clone
+git clone https://github.com/dzulfikriAlfik/walletwise-backend.git .
 
-# Install dependencies
+# Install dependencies (include devDependencies for build)
 npm install
 ```
 
@@ -125,14 +102,11 @@ npm install
 ## 5. Environment Configuration
 
 ```bash
-# Copy env template
 cp .env.example .env
-
-# Edit .env
 nano .env
 ```
 
-Fill `.env` for **production**:
+Production `.env`:
 
 ```env
 # Database
@@ -140,30 +114,23 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_USER=walletwise_user
 DB_PASSWORD=your_secure_password
-DB_NAME=walletwise_prod
+DB_NAME=walletwise
 
 # Server
 NODE_ENV=production
 PORT=3000
 
-# JWT (MUST change to a strong random string!)
-JWT_SECRET=generate_strong_secret_min_32_chars
-JWT_REFRESH_SECRET=generate_another_strong_secret_32_chars
+# JWT (generate: openssl rand -base64 48)
+JWT_SECRET=your_strong_secret_min_32_chars
+JWT_REFRESH_SECRET=another_strong_secret_32_chars
 JWT_EXPIRES_IN=15m
 JWT_REFRESH_EXPIRES_IN=7d
 
-# CORS - set to your frontend domain(s)
-CORS_ORIGIN=https://walletwise.example.com,https://api.walletwise.example.com
+# CORS - your frontend domain(s)
+CORS_ORIGIN=https://walletwise.pintarware.com
 
 # Logger
 LOG_LEVEL=info
-```
-
-**Generate JWT secret:**
-
-```bash
-# Example: generate 64-char secret
-openssl rand -base64 48
 ```
 
 ---
@@ -171,13 +138,12 @@ openssl rand -base64 48
 ## 6. Database Setup
 
 ```bash
-# Generate Prisma client
-npm run prisma:generate
+cd /var/www/walletwise-backend.pintarware.com
 
-# Run migrations (production)
+npm run prisma:generate
 npx prisma migrate deploy
 
-# (Optional) Seed initial data
+# Optional: seed
 npm run prisma:seed
 ```
 
@@ -186,14 +152,13 @@ npm run prisma:seed
 ## 7. Build & Run
 
 ```bash
-# Build TypeScript to JavaScript
-npm run build
+cd /var/www/walletwise-backend.pintarware.com
 
-# Start application
+npm run build
 npm start
 ```
 
-Server runs at `http://localhost:3000`. Check endpoint:
+Test:
 
 ```bash
 curl http://localhost:3000/health
@@ -201,33 +166,57 @@ curl http://localhost:3000/health
 
 ---
 
-## 8. Production (Optional)
+## 8. Production: PM2 & Nginx
 
-### 8.1 Process Manager (PM2)
+### 8.1 Cleanup (if re-installing)
+
+If you already have a previous deployment (e.g. site in sites-enabled), remove it first:
 
 ```bash
-# Install PM2 globally
+# Remove Nginx site
+sudo rm -f /etc/nginx/sites-enabled/walletwise-backend.pintarware.com
+sudo rm -f /etc/nginx/sites-available/walletwise-backend.pintarware.com
+sudo nginx -t
+sudo systemctl reload nginx
+
+# Stop and delete PM2 app (if exists)
+pm2 delete walletwise-backend 2>/dev/null || true
+pm2 save
+```
+
+---
+
+### 8.2 PM2
+
+```bash
+# Install PM2 globally (if not installed)
 sudo npm install -g pm2
 
-# Start app with PM2
-cd /var/www/walletwise-backend
-pm2 start dist/src/index.js --name walletwise-api
+# Start app
+cd /var/www/walletwise-backend.pintarware.com
+pm2 start dist/src/index.js --name walletwise-backend
 
-# Save config for auto-restart on reboot
+# Auto-start on reboot
 pm2 save
 pm2 startup
 ```
 
-### 8.2 ecosystem.config.js (PM2)
+**PM2 commands:**
 
-Create `ecosystem.config.js` in project root:
+```bash
+pm2 status
+pm2 logs walletwise-backend
+pm2 restart walletwise-backend
+```
+
+**Optional:** Create `ecosystem.config.js` in project root:
 
 ```javascript
 module.exports = {
   apps: [{
-    name: 'walletwise-api',
+    name: 'walletwise-backend',
     script: 'dist/src/index.js',
-    cwd: '/var/www/walletwise-backend',
+    cwd: '/var/www/walletwise-backend.pintarware.com',
     instances: 1,
     exec_mode: 'fork',
     env: { NODE_ENV: 'production' },
@@ -243,14 +232,16 @@ module.exports = {
 pm2 start ecosystem.config.js
 ```
 
-### 8.3 Nginx Reverse Proxy
+---
+
+### 8.3 Nginx
 
 ```bash
-# Install Nginx
+# Install Nginx (if not installed)
 sudo apt install -y nginx
 
-# Create config
-sudo nano /etc/nginx/sites-available/walletwise-api
+# Create site config
+sudo nano /etc/nginx/sites-available/walletwise-backend.pintarware.com
 ```
 
 Contents:
@@ -258,7 +249,7 @@ Contents:
 ```nginx
 server {
     listen 80;
-    server_name api.walletwise.example.com;
+    server_name walletwise-backend.pintarware.com;
 
     location / {
         proxy_pass http://127.0.0.1:3000;
@@ -273,35 +264,41 @@ server {
 }
 ```
 
+Enable site:
+
 ```bash
-# Enable site
-sudo ln -s /etc/nginx/sites-available/walletwise-api /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/walletwise-backend.pintarware.com /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-### 8.4 SSL with Let's Encrypt (Optional)
+---
+
+### 8.4 SSL (Let's Encrypt)
 
 ```bash
 sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d api.walletwise.example.com
+sudo certbot --nginx -d walletwise-backend.pintarware.com
 ```
 
 ---
 
-## Quick Reference — Build Pipeline
+## Quick Reference — Full Sequence
 
 ```bash
-# Full sequence from scratch
-cd /var/www/walletwise-backend
+# From scratch
+cd /var/www/walletwise-backend.pintarware.com
 npm install
 cp .env.example .env
-# Edit .env with your configuration
+nano .env
 
 npm run prisma:generate
 npx prisma migrate deploy
 npm run build
-npm start
+
+pm2 start dist/src/index.js --name walletwise-backend
+pm2 save
+pm2 startup
 ```
 
 ---
@@ -312,10 +309,11 @@ npm start
 |-------|----------|
 | `Node version not supported` | Upgrade Node.js to 20.19+ or 22.12+ |
 | `Cannot find module '@prisma/client'` | Run `npm run prisma:generate` |
-| `Cannot find package '@/config'` (ERR_MODULE_NOT_FOUND) | Run full `npm run build` (includes tsc-alias step). Do not skip build or use old dist. |
-| `P1000: Authentication failed` (Prisma migrate) | Verify `.env` credentials match PostgreSQL: user exists, password correct. Test with `psql -U user_walletwise -d walletwise -h localhost`. Ensure `DB_USER`/`DB_PASSWORD` or `DATABASE_URL` are correct. |
-| `Connection refused` (database) | Check PostgreSQL: `sudo systemctl status postgresql` |
-| `Environment variable not found` | Ensure `.env` exists and has all required variables |
+| `tsc-alias: not found` | Run `npm install` (include devDependencies), then `npm run build` |
+| `Cannot find package '@/config'` (ERR_MODULE_NOT_FOUND) | Run full `npm run build` (includes tsc-alias). Do not use old dist. |
+| `P1000: Authentication failed` (Prisma migrate) | Verify `.env` matches PostgreSQL. Test: `psql -U walletwise_user -d walletwise -h localhost -W` |
+| `Connection refused` (database) | `sudo systemctl status postgresql` |
+| `Environment variable not found` | Ensure `.env` exists with all required variables |
 | Port 3000 already in use | Change `PORT` in `.env` |
 
 ---
