@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "prisma generate && tsc",
+    "build": "prisma generate && tsc && tsc-alias -p tsconfig.json --resolve-full-paths",
     "start": "node dist/src/index.js",
     "lint": "eslint src",
     "format": "prettier --write \"src/**/*.ts\"",
@@ -37,6 +37,7 @@
   "homepage": "https://github.com/dzulfikriAlfik/walletwise-backend#readme",
   "dependencies": {
     "@prisma/adapter-pg": "^7.4.0",
+    "@prisma/client": "^7.3.0",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
@@ -45,8 +46,7 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.18.0",
-    "zod": "^4.3.6",
-    "@prisma/client": "^7.3.0"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -63,6 +63,7 @@
     "prettier": "^3.8.1",
     "prisma": "^7.3.0",
     "ts-node": "^10.9.2",
+    "tsc-alias": "^1.8.16",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }

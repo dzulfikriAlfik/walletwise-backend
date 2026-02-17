@@ -312,6 +312,8 @@ npm start
 |-------|----------|
 | `Node version not supported` | Upgrade Node.js to 20.19+ or 22.12+ |
 | `Cannot find module '@prisma/client'` | Run `npm run prisma:generate` |
+| `Cannot find package '@/config'` (ERR_MODULE_NOT_FOUND) | Run full `npm run build` (includes tsc-alias step). Do not skip build or use old dist. |
+| `P1000: Authentication failed` (Prisma migrate) | Verify `.env` credentials match PostgreSQL: user exists, password correct. Test with `psql -U user_walletwise -d walletwise -h localhost`. Ensure `DB_USER`/`DB_PASSWORD` or `DATABASE_URL` are correct. |
 | `Connection refused` (database) | Check PostgreSQL: `sudo systemctl status postgresql` |
 | `Environment variable not found` | Ensure `.env` exists and has all required variables |
 | Port 3000 already in use | Change `PORT` in `.env` |
