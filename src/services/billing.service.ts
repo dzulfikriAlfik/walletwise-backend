@@ -42,8 +42,13 @@ export class BillingService {
 
     // Validate upgrade path
     if (targetTier === 'pro_trial') {
-      // Pro trial only allowed from Free
+      // Pro trial only allowed once, from Free plan
       if (currentTier !== 'free') {
+        if (currentTier === 'pro_trial') {
+          throw new ValidationError(
+            'You have already used the Pro free trial. Please upgrade to Pro for unlimited wallets.'
+          )
+        }
         throw new ValidationError('Pro trial is only available for Free plan')
       }
     } else if (targetTier === 'pro') {
