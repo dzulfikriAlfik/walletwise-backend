@@ -35,6 +35,15 @@ export class AuthorizationError extends AppError {
   }
 }
 
+export class TrialExpiredError extends AppError {
+  constructor(
+    message: string = 'Your Pro trial has ended. Please upgrade to Pro for unlimited wallets.'
+  ) {
+    super(403, message, 'PRO_TRIAL_EXPIRED')
+    this.name = 'TrialExpiredError'
+  }
+}
+
 export class NotFoundError extends AppError {
   constructor(resource: string) {
     super(404, `${resource} not found`, 'NOT_FOUND')

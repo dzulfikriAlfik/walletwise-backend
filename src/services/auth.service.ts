@@ -16,6 +16,8 @@ interface AuthResponse {
     email: string
     name: string
     avatarUrl: string | null
+    preferredLanguage: string | null
+    preferredCurrency: string | null
     subscription: {
       tier: string
       isActive: boolean
@@ -30,12 +32,13 @@ interface UserProfile {
   email: string
   name: string
   avatarUrl: string | null
+  preferredLanguage: string | null
+  preferredCurrency: string | null
   subscription: {
     tier: string
     isActive: boolean
     startDate: Date
     endDate: Date | null
-    trialEndDate: Date | null
   }
   createdAt: Date
 }
@@ -93,6 +96,8 @@ export class AuthService {
         email: user.email,
         name: user.name,
         avatarUrl: user.avatarUrl,
+        preferredLanguage: user.preferredLanguage,
+        preferredCurrency: user.preferredCurrency,
         subscription: {
           tier: user.subscription!.tier,
           isActive: user.subscription!.isActive,
@@ -144,9 +149,13 @@ export class AuthService {
         email: user.email,
         name: user.name,
         avatarUrl: user.avatarUrl,
+        preferredLanguage: user.preferredLanguage,
+        preferredCurrency: user.preferredCurrency,
         subscription: {
           tier: user.subscription?.tier || 'free',
           isActive: user.subscription?.isActive || false,
+          startDate: user.subscription?.startDate || user.createdAt,
+          endDate: user.subscription?.endDate ?? null,
         },
       },
       accessToken,
@@ -206,12 +215,13 @@ export class AuthService {
       email: user.email,
       name: user.name,
       avatarUrl: user.avatarUrl,
+      preferredLanguage: user.preferredLanguage,
+      preferredCurrency: user.preferredCurrency,
       subscription: {
         tier: sub?.tier || 'free',
         isActive: sub?.isActive || false,
         startDate: sub?.startDate || user.createdAt,
         endDate: sub?.endDate ?? null,
-        trialEndDate: (sub as { trialEndDate?: Date | null })?.trialEndDate ?? null,
       },
       createdAt: user.createdAt,
     }
@@ -222,7 +232,7 @@ export class AuthService {
    */
   async updateProfile(
     userId: string,
-    data: { name?: string; avatarUrl?: string }
+    data: { name?: string; avatarUrl?: string; preferredLanguage?: string; preferredCurrency?: string }
   ): Promise<UserProfile> {
     logger.info('Auth operation: updateProfile', { userId, fields: Object.keys(data) })
     const user = await prisma.user.update({
@@ -230,6 +240,8 @@ export class AuthService {
       data: {
         ...(data.name && { name: data.name }),
         ...(data.avatarUrl !== undefined && { avatarUrl: data.avatarUrl }),
+        ...(data.preferredLanguage && { preferredLanguage: data.preferredLanguage }),
+        ...(data.preferredCurrency && { preferredCurrency: data.preferredCurrency }),
       },
       include: {
         subscription: true,
@@ -242,12 +254,13 @@ export class AuthService {
       email: user.email,
       name: user.name,
       avatarUrl: user.avatarUrl,
+      preferredLanguage: user.preferredLanguage,
+      preferredCurrency: user.preferredCurrency,
       subscription: {
         tier: sub?.tier || 'free',
         isActive: sub?.isActive || false,
         startDate: sub?.startDate || user.createdAt,
         endDate: sub?.endDate ?? null,
-        trialEndDate: (sub as { trialEndDate?: Date | null })?.trialEndDate ?? null,
       },
       createdAt: user.createdAt,
     }

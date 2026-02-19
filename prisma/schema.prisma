@@ -19,6 +19,8 @@ model User {
   name      String
   password  String
   avatarUrl String?
+  preferredLanguage String @default("en")  // 'en' | 'id'
+  preferredCurrency String @default("USD") // 'USD' | 'IDR'
 
   // Relationships
   subscription Subscription?
@@ -36,11 +38,10 @@ model Subscription {
   id          String    @id @default(cuid())
   userId      String    @unique
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tier        String    @default("free") // 'free' | 'pro' | 'pro_plus'
+  tier        String    @default("free") // 'free' | 'pro_trial' | 'pro' | 'pro_plus'
   isActive    Boolean   @default(true)
   startDate   DateTime  @default(now())
-  endDate     DateTime? // When subscription expires (for paid plans)
-  trialEndDate DateTime? // When Pro free trial ends (7 days from upgrade)
+  endDate     DateTime? // When subscription expires (paid plans & pro_trial)
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

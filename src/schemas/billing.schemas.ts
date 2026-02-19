@@ -5,15 +5,20 @@
 import { z } from 'zod'
 
 export const upgradeSubscriptionSchema = z.object({
-  targetTier: z.enum(['pro', 'pro_plus']),
+  // targetTier:
+  // - pro_trial: 7-day free trial with Pro features
+  // - pro: paid Pro
+  // - pro_plus: paid Pro+
+  targetTier: z.enum(['pro_trial', 'pro', 'pro_plus']),
   billingPeriod: z.enum(['monthly', 'yearly']).default('monthly'),
-  useTrial: z.boolean().optional().default(false), // For Pro: use 7-day free trial
+  // Deprecated: trial is now represented by targetTier = 'pro_trial'
+  useTrial: z.boolean().optional().default(false),
 })
 
 export const dummyPaymentSchema = z.object({
-  targetTier: z.enum(['pro', 'pro_plus']),
+  targetTier: z.enum(['pro_trial', 'pro', 'pro_plus']),
   billingPeriod: z.enum(['monthly', 'yearly']).default('monthly'),
-  cardNumber: z.string().optional(), // Dummy - not validated
+  cardNumber: z.string().optional(), // Dummy fields - validated at UI level
   expiry: z.string().optional(),
   cvv: z.string().optional(),
 })

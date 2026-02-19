@@ -75,7 +75,8 @@ export class BillingController {
       const result = await billingService.upgradeSubscription(userId, {
         targetTier: validationResult.data.targetTier,
         billingPeriod: validationResult.data.billingPeriod,
-        useTrial: validationResult.data.targetTier === 'pro',
+        // Trial is represented by targetTier = 'pro_trial'
+        useTrial: validationResult.data.targetTier === 'pro_trial',
       })
 
       res.status(200).json({

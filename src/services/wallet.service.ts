@@ -6,7 +6,7 @@
 import { prisma } from '../config/database.js'
 import { WALLET_LIMITS } from '../constants/subscription.js'
 import type { SubscriptionTier } from '../constants/subscription.js'
-import { NotFoundError, ConflictError, AuthorizationError } from '../utils/errors.js'
+import { NotFoundError, ConflictError, AuthorizationError, TrialExpiredError } from '../utils/errors.js'
 import { logger } from '../utils/logger.js'
 import type { CreateWalletInput, UpdateWalletInput } from '../schemas/wallet.schemas.js'
 
@@ -61,27 +61,58 @@ export class WalletService {
    */
   async create(userId: string, data: CreateWalletInput) {
     logger.info('Wallet operation: create', { userId, name: data.name, currency: data.currency })
-    // Check user's subscription tier
+    // Check user exists
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: { subscription: true },
     })
-
     if (!user) {
       throw new NotFoundError('User')
     }
 
-    // Check wallet limit based on subscription (free: 3, pro/pro_plus: unlimited)
+    // Fetch subscription from DB (tier, startDate, endDate for expiry logic)
+    const subRows = await prisma.$queryRaw<
+      Array<{ tier: string; startDate: Date; endDate: Date | null }>
+    >`
+      SELECT tier, "startDate", "endDate" FROM subscriptions WHERE "userId" = ${userId} LIMIT 1
+    `
+    const subRow = subRows[0]
+    const rawTier = (subRow?.tier || 'free').toString().toLowerCase().replace(/-/g, '_').trim()
+    let tier = rawTier as SubscriptionTier
+
+    // Pro trial: unlimited when endDate > now; downgrade to free only when endDate has passed
+    const now = new Date()
+    const nowMs = now.getTime()
+    let trialExpired = false
+    if (tier === 'pro_trial') {
+      const endVal = subRow?.endDate ?? null
+      if (endVal) {
+        const end = new Date(endVal)
+        const endMs = end.getTime()
+        if (!Number.isNaN(endMs) && endMs < nowMs) {
+          tier = 'free'
+          trialExpired = true
+        }
+      }
+      // If pro_trial but no endDate: treat as active (unlimited)
+    }
+
     const walletCount = await prisma.wallet.count({
       where: { userId },
     })
-
-    const tier = (user.subscription?.tier || 'free') as SubscriptionTier
-    const maxWallets = WALLET_LIMITS[tier] ?? 3
+    // null = unlimited; use ?? only when key is missing (undefined)
+    const limit = WALLET_LIMITS[tier]
+    const maxWallets = limit === undefined ? 3 : limit
 
     if (maxWallets !== null && walletCount >= maxWallets) {
+      if (trialExpired) {
+        throw new TrialExpiredError(
+          'Your Pro trial has ended. Please upgrade to Pro for unlimited wallets.'
+        )
+      }
       throw new AuthorizationError(
-        `Wallet limit reached (${maxWallets}). Upgrade to Pro for unlimited wallets.`
+        tier === 'free'
+          ? `Wallet limit reached (${maxWallets}). Upgrade to Pro for unlimited wallets.`
+          : 'Pro trial has ended. Upgrade to Pro for unlimited wallets or delete extra wallets.'
       )
     }
 
