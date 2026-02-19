@@ -21,6 +21,8 @@ interface AuthResponse {
     subscription: {
       tier: string
       isActive: boolean
+      startDate: Date
+      endDate: Date | null
     }
   }
   accessToken: string
@@ -101,6 +103,8 @@ export class AuthService {
         subscription: {
           tier: user.subscription!.tier,
           isActive: user.subscription!.isActive,
+          startDate: user.subscription!.startDate,
+          endDate: user.subscription!.endDate ?? null,
         },
       },
       accessToken,
