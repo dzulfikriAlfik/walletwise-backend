@@ -1,25 +1,27 @@
 # WalletWise Backend
 
-RESTful API untuk aplikasi expense tracking SaaS WalletWise.
+RESTful API for the WalletWise expense tracking SaaS application.
 
 ## System Design Diagram
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                     WalletWise Backend (Express API)               │
-├─────────────────────────────────────────────────────────────────┤
-│  Routes                                                           │
-│  ├── /api/auth     (register, login, profile)                     │
-│  ├── /api/wallets  (CRUD wallets)                                 │
-│  └── /api/transactions (CRUD transactions)                        │
-├─────────────────────────────────────────────────────────────────┤
-│  Middleware                                                       │
-│  ├── auth.middleware (JWT validation)                             │
-│  ├── validation.middleware (Zod schemas)                          │
-│  └── error.middleware                                             │
-├─────────────────────────────────────────────────────────────────┤
-│  Prisma ORM ──────────────────────► PostgreSQL                   │
-└─────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│                     WalletWise Backend (Express API)                     │
+├──────────────────────────────────────────────────────────────────────────┤
+│  Routes                                                                  │
+│  ├── /api/auth        (register, login, refresh, profile, logout)        │
+│  ├── /api/wallets     (CRUD, summary)                                    │
+│  ├── /api/transactions (CRUD, summary)                                   │
+│  └── /api/billing     (plans, upgrade, dummy-payment)                    │
+├──────────────────────────────────────────────────────────────────────────┤
+│  Middleware                                                              │
+│  ├── auth.middleware (JWT validation via httpOnly cookies)               │
+│  ├── validation.middleware (Zod schemas)                                 │
+│  ├── logger.middleware                                                   │
+│  └── error.middleware                                                    │
+├──────────────────────────────────────────────────────────────────────────┤
+│  Prisma ORM ─────────────────────────────► PostgreSQL                    │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Tech Stack
@@ -31,34 +33,45 @@ RESTful API untuk aplikasi expense tracking SaaS WalletWise.
 | Language | TypeScript |
 | ORM | Prisma |
 | Database | PostgreSQL |
-| Auth | JWT (jsonwebtoken) |
+| Auth | JWT (jsonwebtoken) + httpOnly cookies |
 | Validation | Zod |
-| Security | Helmet, bcryptjs |
+| Security | Helmet, bcryptjs, cookie-parser |
+| CORS | Configurable origins with credentials |
 
 ## Feature List
 
 ### Core Features
 - User registration & login
-- JWT authentication with refresh tokens
+- JWT authentication with access + refresh tokens (httpOnly cookies)
+- Token refresh & logout
+- User profile (get, update) with avatar, preferred language, preferred currency
 - Wallet CRUD (create, read, update, delete)
-- Transaction management
-- Subscription tier (free vs pro)
+- Wallet summary (aggregate stats)
+- Transaction management (CRUD)
+- Transaction summary (aggregate stats)
+- Subscription tiers (free, pro_trial, pro, pro_plus)
+- Billing API (plans, upgrade, dummy payment for demo)
 
 ### Subscription Rules
-- Free users: up to 3 wallets
-- Pro users: unlimited wallets
-- Subscription logic mocked for demo
+| Tier | Max Wallets | Features |
+|------|-------------|----------|
+| Free | 3 | Transaction tracking, basic summary |
+| Pro Trial | Unlimited (7 days) | Same as Pro, one-time trial |
+| Pro | Unlimited | $9.99/mo or $99.99/yr |
+| Pro+ | Unlimited | Analytics, CSV/Excel export; $19.99/mo or $199.99/yr |
 
 ## API Documentation
 
 ### Base URL
 - **Local:** `http://localhost:3000/api`
-- **Production:** `_Add base URL when deployed_`
+- **Production:** _Add base URL when deployed_
 
 ### Authentication
 
+All auth responses set `accessToken` and `refreshToken` as httpOnly cookies. Protected routes require `credentials: true` and cookies will be sent automatically.
+
 #### Register
-```
+```http
 POST /api/auth/register
 Content-Type: application/json
 
@@ -70,16 +83,29 @@ Content-Type: application/json
 
 Response: 201
 {
-  "user": { ... },
-  "tokens": {
-    "accessToken": "jwt...",
-    "refreshToken": "jwt..."
+  "success": true,
+  "data": {
+    "user": {
+      "id": "uuid",
+      "email": "user@example.com",
+      "name": "John Doe",
+      "avatarUrl": null,
+      "preferredLanguage": null,
+      "preferredCurrency": null,
+      "subscription": {
+        "tier": "free",
+        "isActive": true,
+        "startDate": "...",
+        "endDate": null
+      }
+    }
   }
 }
 ```
+_Tokens are set in httpOnly cookies._
 
 #### Login
-```
+```http
 POST /api/auth/login
 Content-Type: application/json
 
@@ -90,73 +116,343 @@ Content-Type: application/json
 
 Response: 200
 {
-  "user": { ... },
-  "tokens": { ... }
+  "success": true,
+  "data": {
+    "user": { ... }
+  }
 }
 ```
+_Tokens are set in httpOnly cookies._
 
-#### Get Profile
-```
-GET /api/auth/profile
-Authorization: Bearer <accessToken>
+#### Refresh Token
+```http
+POST /api/auth/refresh
+Cookie: refreshToken=<refreshToken>
 
 Response: 200
 {
-  "id": "uuid",
-  "email": "user@example.com",
-  "name": "John Doe",
-  "subscription": {
-    "tier": "free",
-    "isActive": true
+  "success": true,
+  "message": "Token refreshed successfully"
+}
+```
+_New access token is set in httpOnly cookie._
+
+#### Get Profile
+```http
+GET /api/auth/profile
+Cookie: accessToken=<accessToken>
+
+Response: 200
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "name": "John Doe",
+    "avatarUrl": null,
+    "preferredLanguage": "en",
+    "preferredCurrency": "USD",
+    "subscription": {
+      "tier": "free",
+      "isActive": true,
+      "startDate": "...",
+      "endDate": null
+    },
+    "createdAt": "..."
   }
 }
 ```
 
-### Wallets
+#### Update Profile
+```http
+PATCH /api/auth/profile
+Cookie: accessToken=<accessToken>
+Content-Type: application/json
 
-#### Get All Wallets
+{
+  "name": "Jane Doe",
+  "avatarUrl": "https://...",
+  "preferredLanguage": "id",
+  "preferredCurrency": "IDR"
+}
+
+Response: 200
+{ "success": true, "data": { ... } }
 ```
-GET /api/wallets
-Authorization: Bearer <accessToken>
+
+#### Logout
+```http
+POST /api/auth/logout
+Cookie: accessToken=<accessToken>
 
 Response: 200
 {
-  "data": [ ... ],
-  "pagination": { ... }
+  "success": true,
+  "message": "Logged out successfully"
+}
+```
+_Cookies are cleared._
+
+---
+
+### Wallets
+
+_All wallet endpoints require `Cookie: accessToken`._
+
+#### Get Summary
+```http
+GET /api/wallets/summary
+
+Response: 200
+{ "success": true, "data": { ... } }
+```
+
+#### Get All Wallets
+```http
+GET /api/wallets
+
+Response: 200
+{
+  "success": true,
+  "data": [ ... ]
 }
 ```
 
-#### Create Wallet
+#### Get Wallet by ID
+```http
+GET /api/wallets/:id
+
+Response: 200
+{ "success": true, "data": { ... } }
 ```
+
+#### Create Wallet
+```http
 POST /api/wallets
-Authorization: Bearer <accessToken>
 Content-Type: application/json
 
 {
   "name": "My Wallet",
   "balance": 1000,
-  "currency": "USD"
+  "currency": "USD",
+  "color": "#4CAF50",
+  "icon": "wallet"
 }
 
 Response: 201
-{ ... wallet data ... }
+{ "success": true, "data": { ... } }
 ```
 
 #### Update Wallet
-```
+```http
 PATCH /api/wallets/:id
-Authorization: Bearer <accessToken>
+Content-Type: application/json
+
+{
+  "name": "Updated Name",
+  "balance": 1500,
+  "color": "#2196F3",
+  "icon": "credit-card"
+}
 
 Response: 200
-{ ... updated wallet ... }
+{ "success": true, "data": { ... } }
 ```
 
 #### Delete Wallet
-```
+```http
 DELETE /api/wallets/:id
-Authorization: Bearer <accessToken>
 
 Response: 204
+```
+
+---
+
+### Transactions
+
+_All transaction endpoints require `Cookie: accessToken`._
+
+#### Get Summary
+```http
+GET /api/transactions/summary
+
+Response: 200
+{ "success": true, "data": { ... } }
+```
+
+#### Get All Transactions
+```http
+GET /api/transactions?walletId=clx...&type=expense&category=food&startDate=2025-02-01&endDate=2025-02-28
+
+Response: 200
+{
+  "success": true,
+  "data": [ ... ]
+}
+```
+_Optional query params: `walletId`, `type`, `category`, `startDate`, `endDate`._
+
+#### Get Transaction by ID
+```http
+GET /api/transactions/:id
+
+Response: 200
+{ "success": true, "data": { ... } }
+```
+
+#### Create Transaction
+```http
+POST /api/transactions
+Content-Type: application/json
+
+{
+  "walletId": "clx...",
+  "type": "expense",
+  "category": "food",
+  "amount": 25.50,
+  "description": "Lunch",
+  "date": "2025-02-21T12:00:00.000Z"
+}
+
+Response: 201
+{ "success": true, "data": { ... } }
+```
+
+#### Update Transaction
+```http
+PATCH /api/transactions/:id
+Content-Type: application/json
+
+{
+  "type": "income",
+  "category": "salary",
+  "amount": 3000,
+  "description": "Monthly salary",
+  "date": "2025-02-21T00:00:00.000Z"
+}
+
+Response: 200
+{ "success": true, "data": { ... } }
+```
+
+#### Delete Transaction
+```http
+DELETE /api/transactions/:id
+
+Response: 204
+```
+
+---
+
+### Billing
+
+#### Get Plans (Public)
+```http
+GET /api/billing/plans
+
+Response: 200
+{
+  "success": true,
+  "data": {
+    "free": { "tier": "free", "name": "Free", "maxWallets": 3, "features": [...], ... },
+    "pro": { "tier": "pro", "name": "Pro", "maxWallets": null, "features": [...], "prices": {...}, "trialDays": 7 },
+    "pro_plus": { "tier": "pro_plus", "name": "Pro+", "maxWallets": null, "features": [...], "prices": {...} }
+  }
+}
+```
+
+#### Upgrade Subscription (Protected)
+```http
+POST /api/billing/upgrade
+Cookie: accessToken=<accessToken>
+Content-Type: application/json
+
+{
+  "targetTier": "pro_trial",
+  "billingPeriod": "monthly"
+}
+
+// For paid upgrade:
+{
+  "targetTier": "pro",
+  "billingPeriod": "yearly"
+}
+
+Response: 200
+{
+  "success": true,
+  "data": {
+    "subscription": {
+      "tier": "pro",
+      "isActive": true,
+      "startDate": "...",
+      "endDate": "..."
+    },
+    "payment": {
+      "amount": 99.99,
+      "currency": "USD",
+      "billingPeriod": "yearly",
+      "isTrial": false
+    }
+  }
+}
+```
+
+#### Dummy Payment (Protected)
+```http
+POST /api/billing/dummy-payment
+Cookie: accessToken=<accessToken>
+Content-Type: application/json
+
+{
+  "targetTier": "pro",
+  "billingPeriod": "monthly",
+  "cardNumber": "4111111111111111",
+  "expiry": "12/28",
+  "cvv": "123"
+}
+
+Response: 200
+{
+  "success": true,
+  "data": {
+    "subscription": { ... },
+    "payment": { ... },
+    "paymentStatus": "completed",
+    "transactionId": "dummy_..."
+  }
+}
+```
+
+---
+
+### Error Response Format
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Validation failed",
+    "details": { "email": ["Invalid email address"] }
+  }
+}
+```
+
+Error codes: `VALIDATION_ERROR`, `AUTHENTICATION_ERROR`, `AUTHORIZATION_ERROR`, `NOT_FOUND`, `CONFLICT`, `PRO_TRIAL_EXPIRED`, `INTERNAL_SERVER_ERROR`.
+
+---
+
+### Health Check
+
+```http
+GET /health
+
+Response: 200
+{
+  "status": "ok",
+  "timestamp": "2025-02-21T..."
+}
 ```
 
 ## How to Run Locally
@@ -175,12 +471,18 @@ npm install
 # Copy environment file
 cp .env.example .env
 
-# Edit .env with your database credentials
-# DATABASE_URL="postgresql://user:password@localhost:5432/walletwise"
-# JWT_SECRET="your-secret-key"
+# Edit .env with your database and JWT credentials:
+# DB_USER=your_username
+# DB_PASSWORD=your_password
+# DB_NAME=walletwise_dev
+# JWT_SECRET=your-secret-key
+# JWT_REFRESH_SECRET=your-refresh-secret-key
 
 # Run migrations
 npm run prisma:migrate
+
+# (Optional) Seed database
+npm run prisma:seed
 
 # Start development server
 npm run dev
@@ -190,42 +492,59 @@ Server runs at `http://localhost:3000`
 
 ### Available Scripts
 ```bash
-npm run dev              # Start with hot reload
-npm run build            # Build for production
+npm run dev              # Start with hot reload (tsx watch)
+npm run build            # Build for production (prisma generate + tsc)
 npm run start            # Run production build
 npm run prisma:generate  # Generate Prisma client
 npm run prisma:migrate   # Run migrations
 npm run prisma:studio    # Open Prisma Studio
+npm run prisma:seed      # Seed database
+npm run lint             # Run ESLint
+npm run format           # Run Prettier
 ```
 
 ### Environment Variables
-| Variable | Description |
-|----------|-------------|
-| `DATABASE_URL` | PostgreSQL connection string |
-| `JWT_SECRET` | Secret for signing tokens |
-| `NODE_ENV` | `development` or `production` |
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `DB_HOST` | PostgreSQL host | No (default: localhost) |
+| `DB_PORT` | PostgreSQL port | No (default: 5432) |
+| `DB_USER` | Database user | Yes |
+| `DB_PASSWORD` | Database password | Yes |
+| `DB_NAME` | Database name | Yes |
+| `DATABASE_URL` | Full PostgreSQL URL (overrides components) | No |
+| `JWT_SECRET` | Secret for access tokens | Yes |
+| `JWT_REFRESH_SECRET` | Secret for refresh tokens | Yes |
+| `JWT_EXPIRES_IN` | Access token expiry | No (default: 15m) |
+| `JWT_REFRESH_EXPIRES_IN` | Refresh token expiry | No (default: 7d) |
+| `NODE_ENV` | development \| production | No (default: development) |
+| `PORT` | Server port | No (default: 3000) |
+| `CORS_ORIGIN` | Comma-separated origins | No (default: localhost:5173, localhost:3000) |
+| `LOG_LEVEL` | Log level | No (default: debug) |
 
 ## Deployment Link
 
-<!-- Add your deployed backend URL here, e.g. https://api.walletwise.com -->
+<!-- Add your deployed backend URL here -->
 - **Production:** _Add deployment link when ready_
 - **Staging:** _Add staging link when ready_
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 src/
-├── config/              # Configuration
-├── controllers/         # Request handlers
-├── services/            # Business logic
-├── middleware/          # Auth, validation, error
-├── routes/              # API routes
-├── schemas/             # Zod validation
-└── index.ts             # Entry point
+├── config/          # Database, env, load-env
+├── constants/       # Subscription tier limits, prices
+├── controllers/     # Request handlers (auth, wallet, transaction, billing)
+├── middleware/      # Auth, validation, error, logger
+├── routes/          # API route definitions
+├── schemas/         # Zod validation schemas
+├── services/        # Business logic
+├── utils/           # JWT, errors, logger, validation
+├── app.ts           # Express app setup
+└── index.ts         # Entry point
 ```
 
-## 📄 License
+## License
 
 MIT License
