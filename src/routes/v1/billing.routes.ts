@@ -1,10 +1,10 @@
 /**
- * Billing Routes
+ * Billing Routes (API v1)
  */
 
 import { Router } from 'express'
-import { billingController } from '../controllers/billing.controller.js'
-import { verifyToken } from '../middleware/auth.middleware.js'
+import { billingController } from '../../controllers/billing.controller.js'
+import { verifyToken } from '../../middleware/auth.middleware.js'
 
 const router = Router()
 

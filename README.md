@@ -64,8 +64,7 @@ RESTful API for the WalletWise expense tracking SaaS application.
 ## API Documentation
 
 ### Base URL
-- **Local (versioned):** `http://localhost:3000/api/v1`
-- **Local (legacy):** `http://localhost:3000/api` (backward compatible)
+- **Local:** `http://localhost:3000/api/v1`
 - **Production:** _Add base URL when deployed_
 
 ### OpenAPI 3.1 Specification
@@ -544,7 +543,8 @@ src/
 ├── constants/       # Subscription tier limits, prices
 ├── controllers/     # Request handlers (auth, wallet, transaction, billing)
 ├── middleware/      # Auth, validation, error, logger
-├── routes/          # API route definitions
+├── routes/
+│   └── v1/          # API v1 route definitions (auth, wallet, transaction, billing)
 ├── schemas/         # Zod validation schemas
 ├── services/        # Business logic
 ├── utils/           # JWT, errors, logger, validation

@@ -1,11 +1,11 @@
 /**
- * Transaction Routes
+ * Transaction Routes (API v1)
  * Defines all transaction-related endpoints
  */
 
 import { Router } from 'express'
-import { transactionController } from '../controllers/transaction.controller.js'
-import { verifyToken } from '../middleware/auth.middleware.js'
+import { transactionController } from '../../controllers/transaction.controller.js'
+import { verifyToken } from '../../middleware/auth.middleware.js'
 
 const router = Router()
 
@@ -13,27 +13,27 @@ const router = Router()
 router.use(verifyToken)
 
 // Get transaction summary (must be before /:id to avoid conflict)
-// GET /api/transactions/summary
+// GET /api/v1/transactions/summary
 router.get('/summary', (req, res, next) => transactionController.getSummary(req, res, next))
 
 // Get all transactions
-// GET /api/transactions
+// GET /api/v1/transactions
 router.get('/', (req, res, next) => transactionController.getAll(req, res, next))
 
 // Get a single transaction
-// GET /api/transactions/:id
+// GET /api/v1/transactions/:id
 router.get('/:id', (req, res, next) => transactionController.getById(req, res, next))
 
 // Create a new transaction
-// POST /api/transactions
+// POST /api/v1/transactions
 router.post('/', (req, res, next) => transactionController.create(req, res, next))
 
 // Update a transaction
-// PATCH /api/transactions/:id
+// PATCH /api/v1/transactions/:id
 router.patch('/:id', (req, res, next) => transactionController.update(req, res, next))
 
 // Delete a transaction
-// DELETE /api/transactions/:id
+// DELETE /api/v1/transactions/:id
 router.delete('/:id', (req, res, next) => transactionController.delete(req, res, next))
 
 export default router
