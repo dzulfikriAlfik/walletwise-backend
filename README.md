@@ -8,11 +8,12 @@ RESTful API for the WalletWise expense tracking SaaS application.
 ┌──────────────────────────────────────────────────────────────────────────┐
 │                     WalletWise Backend (Express API)                     │
 ├──────────────────────────────────────────────────────────────────────────┤
-│  Routes                                                                  │
-│  ├── /api/auth        (register, login, refresh, profile, logout)        │
-│  ├── /api/wallets     (CRUD, summary)                                    │
-│  ├── /api/transactions (CRUD, summary)                                   │
-│  └── /api/billing     (plans, upgrade, dummy-payment)                    │
+│  Routes (versioned under /api/v1)                                        │
+│  ├── /api/v1/auth        (register, login, refresh, profile, logout)     │
+│  ├── /api/v1/wallets     (CRUD, summary)                                 │
+│  ├── /api/v1/transactions (CRUD, summary)                                │
+│  ├── /api/v1/billing     (plans, upgrade, dummy-payment)                 │
+│  └── /api/v1/openapi.yaml (OpenAPI 3.1 specification)                    │
 ├──────────────────────────────────────────────────────────────────────────┤
 │  Middleware                                                              │
 │  ├── auth.middleware (JWT validation via httpOnly cookies)               │
@@ -63,8 +64,14 @@ RESTful API for the WalletWise expense tracking SaaS application.
 ## API Documentation
 
 ### Base URL
-- **Local:** `http://localhost:3000/api`
+- **Local (versioned):** `http://localhost:3000/api/v1`
+- **Local (legacy):** `http://localhost:3000/api` (backward compatible)
 - **Production:** _Add base URL when deployed_
+
+### OpenAPI 3.1 Specification
+- **Spec URL:** `GET /api/v1/openapi.yaml`
+- **Local:** http://localhost:3000/api/v1/openapi.yaml
+- **Policy:** See [docs/API_VERSIONING.md](docs/API_VERSIONING.md) for versioning rules
 
 ### Authentication
 

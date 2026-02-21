@@ -15,9 +15,9 @@ This document tracks pending tasks and unimplemented items for the WalletWise ba
 
 From [docs/ipa/ipa-checklist.md](ipa/ipa-checklist.md):
 
-- [ ] Create OpenAPI 3.1 specification
-- [ ] Implement API versioning (e.g. `/v1`, `/v2`)
-- [ ] Document API versioning policy
+- [x] Create OpenAPI 3.1 specification
+- [x] Implement API versioning (e.g. `/v1`, `/v2`)
+- [x] Document API versioning policy
 - [ ] Identify and document idempotency rules for applicable operations
 
 ---

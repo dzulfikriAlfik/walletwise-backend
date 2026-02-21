@@ -1,0 +1,1018 @@
+openapi: 3.1.0
+
+info:
+  title: WalletWise API
+  version: 1.0.0
+  description: |
+    RESTful API for the WalletWise expense tracking SaaS application.
+    All auth responses set `accessToken` and `refreshToken` as httpOnly cookies.
+    Protected routes require `credentials: true`; cookies are sent automatically.
+  contact:
+    name: WalletWise
+    url: https://github.com/dzulfikriAlfik/walletwise-backend
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Local development
+  - url: /api/v1
+    description: Relative base (use with servers[0] or production base URL)
+
+tags:
+  - name: Auth
+    description: Authentication endpoints
+  - name: Wallets
+    description: Wallet CRUD and summary
+  - name: Transactions
+    description: Transaction CRUD and summary
+  - name: Billing
+    description: Subscription plans and upgrades
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register new user
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User registered successfully. Tokens set in httpOnly cookies.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSuccessResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login user
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful. Tokens set in httpOnly cookies.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSuccessResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token
+      operationId: refreshToken
+      description: Requires `refreshToken` in httpOnly cookie.
+      security: []
+      responses:
+        '200':
+          description: Token refreshed. New access token set in cookie.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+
+  /auth/profile:
+    get:
+      tags: [Auth]
+      summary: Get current user profile
+      operationId: getProfile
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileSuccessResponse'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+    patch:
+      tags: [Auth]
+      summary: Update user profile
+      operationId: updateProfile
+      security:
+        - cookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileSuccessResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout user
+      operationId: logout
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Logged out. Cookies cleared.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+
+  /wallets/summary:
+    get:
+      tags: [Wallets]
+      summary: Get wallet summary
+      operationId: getWalletSummary
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Wallet aggregate stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletSummarySuccessResponse'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+
+  /wallets:
+    get:
+      tags: [Wallets]
+      summary: Get all wallets
+      operationId: getAllWallets
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: List of wallets
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletListSuccessResponse'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+    post:
+      tags: [Wallets]
+      summary: Create wallet
+      operationId: createWallet
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWalletRequest'
+      responses:
+        '201':
+          description: Wallet created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletSuccessResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '403':
+          $ref: '#/components/responses/AuthorizationError'
+
+  /wallets/{id}:
+    parameters:
+      - $ref: '#/components/parameters/WalletId'
+    get:
+      tags: [Wallets]
+      summary: Get wallet by ID
+      operationId: getWalletById
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Wallet details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletSuccessResponse'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    patch:
+      tags: [Wallets]
+      summary: Update wallet
+      operationId: updateWallet
+      security:
+        - cookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWalletRequest'
+      responses:
+        '200':
+          description: Wallet updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletSuccessResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    delete:
+      tags: [Wallets]
+      summary: Delete wallet
+      operationId: deleteWallet
+      security:
+        - cookieAuth: []
+      responses:
+        '204':
+          description: Wallet deleted. All transactions in it are deleted.
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /transactions/summary:
+    get:
+      tags: [Transactions]
+      summary: Get transaction summary
+      operationId: getTransactionSummary
+      security:
+        - cookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/WalletIdQuery'
+        - $ref: '#/components/parameters/StartDate'
+        - $ref: '#/components/parameters/EndDate'
+      responses:
+        '200':
+          description: Transaction aggregate stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionSummarySuccessResponse'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+
+  /transactions:
+    get:
+      tags: [Transactions]
+      summary: Get all transactions
+      operationId: getAllTransactions
+      security:
+        - cookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/WalletIdQuery'
+        - $ref: '#/components/parameters/TransactionType'
+        - $ref: '#/components/parameters/Category'
+        - $ref: '#/components/parameters/StartDate'
+        - $ref: '#/components/parameters/EndDate'
+      responses:
+        '200':
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionListSuccessResponse'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+    post:
+      tags: [Transactions]
+      summary: Create transaction
+      operationId: createTransaction
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTransactionRequest'
+      responses:
+        '201':
+          description: Transaction created. Wallet balance auto-updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionSuccessResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /transactions/{id}:
+    parameters:
+      - $ref: '#/components/parameters/TransactionId'
+    get:
+      tags: [Transactions]
+      summary: Get transaction by ID
+      operationId: getTransactionById
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Transaction details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionSuccessResponse'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    patch:
+      tags: [Transactions]
+      summary: Update transaction
+      operationId: updateTransaction
+      security:
+        - cookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTransactionRequest'
+      responses:
+        '200':
+          description: Transaction updated. Wallet balance recalculated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionSuccessResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    delete:
+      tags: [Transactions]
+      summary: Delete transaction
+      operationId: deleteTransaction
+      security:
+        - cookieAuth: []
+      responses:
+        '204':
+          description: Transaction deleted. Wallet balance reverted.
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /billing/plans:
+    get:
+      tags: [Billing]
+      summary: Get subscription plans
+      operationId: getPlans
+      description: Public endpoint. No authentication required.
+      security: []
+      responses:
+        '200':
+          description: Plan definitions with features and prices
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlansSuccessResponse'
+
+  /billing/upgrade:
+    post:
+      tags: [Billing]
+      summary: Upgrade subscription
+      operationId: upgradeSubscription
+      description: Simulates upgrade. For paid tiers, use dummy-payment for full flow.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpgradeSubscriptionRequest'
+      responses:
+        '200':
+          description: Subscription upgraded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpgradeSuccessResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '403':
+          $ref: '#/components/responses/AuthorizationError'
+
+  /billing/dummy-payment:
+    post:
+      tags: [Billing]
+      summary: Dummy payment (demo)
+      operationId: dummyPayment
+      description: Simulates card payment. Use test card 4111111111111111.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DummyPaymentRequest'
+      responses:
+        '200':
+          description: Payment completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DummyPaymentSuccessResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: accessToken
+      description: JWT access token (httpOnly cookie). Set by login/register/refresh.
+
+  parameters:
+    WalletId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: cuid
+    TransactionId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: cuid
+    WalletIdQuery:
+      name: walletId
+      in: query
+      schema:
+        type: string
+        format: cuid
+    TransactionType:
+      name: type
+      in: query
+      schema:
+        type: string
+        enum: [income, expense]
+    Category:
+      name: category
+      in: query
+      schema:
+        type: string
+    StartDate:
+      name: startDate
+      in: query
+      schema:
+        type: string
+        format: date
+        example: '2025-02-01'
+    EndDate:
+      name: endDate
+      in: query
+      schema:
+        type: string
+        format: date
+        example: '2025-02-28'
+
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [email, name, password]
+      properties:
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        password:
+          type: string
+          minLength: 8
+          description: Must contain uppercase, lowercase, number, and special character
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    UpdateProfileRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        avatarUrl:
+          type: string
+          format: uri
+          nullable: true
+        preferredLanguage:
+          type: string
+          enum: [en, id]
+        preferredCurrency:
+          type: string
+          enum: [USD, IDR]
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: cuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        avatarUrl:
+          type: string
+          format: uri
+          nullable: true
+        preferredLanguage:
+          type: string
+          nullable: true
+        preferredCurrency:
+          type: string
+          nullable: true
+        subscription:
+          $ref: '#/components/schemas/Subscription'
+    Subscription:
+      type: object
+      properties:
+        tier:
+          type: string
+          enum: [free, pro_trial, pro, pro_plus]
+        isActive:
+          type: boolean
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+    AuthSuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+    ProfileSuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/User'
+    MessageResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+    CreateWalletRequest:
+      type: object
+      required: [name, balance, currency]
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+        balance:
+          type: number
+          minimum: 0
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          example: USD
+        color:
+          type: string
+          example: '#4CAF50'
+        icon:
+          type: string
+          example: wallet
+    UpdateWalletRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+        balance:
+          type: number
+          minimum: 0
+        color:
+          type: string
+        icon:
+          type: string
+    Wallet:
+      type: object
+      properties:
+        id:
+          type: string
+          format: cuid
+        name:
+          type: string
+        balance:
+          type: number
+        currency:
+          type: string
+        color:
+          type: string
+          nullable: true
+        icon:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    WalletSummary:
+      type: object
+      properties:
+        totalBalance:
+          type: number
+        walletCount:
+          type: integer
+    WalletSuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/Wallet'
+    WalletListSuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Wallet'
+    WalletSummarySuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/WalletSummary'
+    CreateTransactionRequest:
+      type: object
+      required: [walletId, type, category, amount, description, date]
+      properties:
+        walletId:
+          type: string
+          format: cuid
+        type:
+          type: string
+          enum: [income, expense]
+        category:
+          type: string
+        amount:
+          type: number
+          exclusiveMinimum: 0
+        description:
+          type: string
+          minLength: 1
+          maxLength: 200
+        date:
+          type: string
+          format: date-time
+    UpdateTransactionRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [income, expense]
+        category:
+          type: string
+        amount:
+          type: number
+          exclusiveMinimum: 0
+        description:
+          type: string
+          maxLength: 200
+        date:
+          type: string
+          format: date-time
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: cuid
+        walletId:
+          type: string
+        type:
+          type: string
+          enum: [income, expense]
+        category:
+          type: string
+        amount:
+          type: number
+        description:
+          type: string
+        date:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    TransactionSummary:
+      type: object
+      properties:
+        totalIncome:
+          type: number
+        totalExpense:
+          type: number
+        balance:
+          type: number
+        transactionCount:
+          type: integer
+    TransactionSuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/Transaction'
+    TransactionListSuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Transaction'
+    TransactionSummarySuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/TransactionSummary'
+    UpgradeSubscriptionRequest:
+      type: object
+      required: [targetTier]
+      properties:
+        targetTier:
+          type: string
+          enum: [pro_trial, pro, pro_plus]
+        billingPeriod:
+          type: string
+          enum: [monthly, yearly]
+          default: monthly
+        useTrial:
+          type: boolean
+          deprecated: true
+    DummyPaymentRequest:
+      type: object
+      required: [targetTier]
+      properties:
+        targetTier:
+          type: string
+          enum: [pro_trial, pro, pro_plus]
+        billingPeriod:
+          type: string
+          enum: [monthly, yearly]
+          default: monthly
+        cardNumber:
+          type: string
+          example: '4111111111111111'
+        expiry:
+          type: string
+          example: '12/28'
+        cvv:
+          type: string
+          example: '123'
+    UpgradeSuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            subscription:
+              $ref: '#/components/schemas/Subscription'
+            payment:
+              type: object
+              properties:
+                amount:
+                  type: number
+                currency:
+                  type: string
+                billingPeriod:
+                  type: string
+                isTrial:
+                  type: boolean
+    DummyPaymentSuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            subscription:
+              $ref: '#/components/schemas/Subscription'
+            payment:
+              type: object
+            paymentStatus:
+              type: string
+              example: completed
+            transactionId:
+              type: string
+    PlansSuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/PlanDefinition'
+    PlanDefinition:
+      type: object
+      properties:
+        tier:
+          type: string
+        name:
+          type: string
+        maxWallets:
+          type: integer
+          nullable: true
+        features:
+          type: array
+          items:
+            type: string
+        analytics:
+          type: boolean
+        export:
+          type: boolean
+        prices:
+          type: object
+          properties:
+            monthly:
+              type: number
+            yearly:
+              type: number
+        trialDays:
+          type: integer
+    ErrorResponse:
+      type: object
+      required: [success, error]
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum:
+                - VALIDATION_ERROR
+                - AUTHENTICATION_ERROR
+                - AUTHORIZATION_ERROR
+                - NOT_FOUND
+                - CONFLICT
+                - PRO_TRIAL_EXPIRED
+                - INTERNAL_SERVER_ERROR
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  type: string
+
+  responses:
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error:
+              code: VALIDATION_ERROR
+              message: Validation failed
+              details:
+                email: [Invalid email address]
+    AuthenticationError:
+      description: Authentication failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error:
+              code: AUTHENTICATION_ERROR
+              message: Authentication failed
+    AuthorizationError:
+      description: Access denied
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error:
+              code: AUTHORIZATION_ERROR
+              message: Access denied
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error:
+              code: NOT_FOUND
+              message: Wallet not found
+    ConflictError:
+      description: Conflict (e.g. duplicate email)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error:
+              code: CONFLICT
+              message: User with this email already exists
