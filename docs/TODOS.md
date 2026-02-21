@@ -1,6 +1,15 @@
-# WalletWise Backend – Unimplemented Todos
+# WalletWise Backend – Todos
 
-This document tracks pending tasks and unimplemented items for the WalletWise backend project.
+This document tracks pending tasks and completed items for the WalletWise backend project.
+
+---
+
+## Recently Completed
+
+- [x] OpenAPI 3.1 specification (`docs/openapi/openapi.yaml`)
+- [x] API versioning under `/api/v1` (routes in `src/routes/v1/`)
+- [x] API versioning policy (`docs/API_VERSIONING.md`)
+- [x] Legacy unversioned routes removed (only `/api/v1` available)
 
 ---
 
@@ -39,14 +48,13 @@ From [docs/ipa/ipa-checklist.md](ipa/ipa-checklist.md):
 
 ---
 
-## Priority Summary
+## Priority Summary (Pending)
 
-| Priority  | Item                             |
-|----------|-----------------------------------|
-| **High** | OpenAPI 3.1 specification         |
-| **High** | API versioning                    |
-| **Medium** | CSV/Excel export API            |
-| **Medium** | Analytics API                    |
-| **Lower** | Unit & API tests                 |
-| **Lower** | CI pipeline                      |
-| **Lower** | Deployment URLs                  |
+| Priority   | Item                  |
+|-----------|------------------------|
+| **High**  | CSV/Excel export API   |
+| **High**  | Analytics API          |
+| **Medium**| Unit & API tests       |
+| **Medium**| Idempotency docs       |
+| **Lower** | CI pipeline            |
+| **Lower** | Deployment URLs        |
