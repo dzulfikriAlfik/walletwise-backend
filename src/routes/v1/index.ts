@@ -9,6 +9,7 @@ import authRoutes from './auth.routes.js'
 import walletRoutes from './wallet.routes.js'
 import transactionRoutes from './transaction.routes.js'
 import billingRoutes from './billing.routes.js'
+import paymentRoutes from './payment.routes.js'
 import categoryRoutes from './category.routes.js'
 import settingsRoutes from './settings.routes.js'
 
@@ -19,6 +20,7 @@ v1Router.use('/settings', settingsRoutes)
 v1Router.use('/wallets', walletRoutes)
 v1Router.use('/transactions', transactionRoutes)
 v1Router.use('/billing', billingRoutes)
+v1Router.use('/payments', paymentRoutes)
 v1Router.use('/categories', categoryRoutes)
 
 // Serve OpenAPI 3.1 specification

@@ -40,6 +40,21 @@ export const env = {
   // CORS
   CORS_ORIGIN: getEnv('CORS_ORIGIN', 'http://localhost:5173,http://localhost:3000'),
   
+  // Stripe
+  STRIPE_SECRET_KEY: getEnv('STRIPE_SECRET_KEY', ''),
+  STRIPE_WEBHOOK_SECRET: getEnv('STRIPE_WEBHOOK_SECRET', ''),
+  STRIPE_PRICE_PRO_MONTHLY: getEnv('STRIPE_PRICE_PRO_MONTHLY', ''),
+  STRIPE_PRICE_PRO_YEARLY: getEnv('STRIPE_PRICE_PRO_YEARLY', ''),
+  STRIPE_PRICE_PRO_PLUS_MONTHLY: getEnv('STRIPE_PRICE_PRO_PLUS_MONTHLY', ''),
+  STRIPE_PRICE_PRO_PLUS_YEARLY: getEnv('STRIPE_PRICE_PRO_PLUS_YEARLY', ''),
+  
+  // Xendit
+  XENDIT_SECRET_KEY: getEnv('XENDIT_SECRET_KEY', ''),
+  XENDIT_WEBHOOK_TOKEN: getEnv('XENDIT_WEBHOOK_TOKEN', ''),
+  
+  // App URLs (for redirects)
+  FRONTEND_URL: getEnv('FRONTEND_URL', 'http://localhost:5173'),
+  
   // Logger
   LOG_LEVEL: getEnv('LOG_LEVEL', 'debug'),
 } as const

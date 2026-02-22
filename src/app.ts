@@ -11,6 +11,8 @@ import { env } from './config/env.js'
 import { errorHandler } from './middleware/error.middleware.js'
 import { requestLogger } from './middleware/logger.middleware.js'
 import v1Router from './routes/v1/index.js'
+import webhookRouter from './routes/webhook.routes.js'
+import { webhookController } from './controllers/webhook.controller.js'
 
 const app = express()
 
@@ -20,10 +22,17 @@ app.use(cors({
   origin: env.CORS_ORIGIN.split(','),
   credentials: true,
 }))
-app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
 app.use(requestLogger)
+
+// Stripe webhook MUST use raw body for signature verification - mount BEFORE express.json()
+app.use('/webhook/stripe', express.raw({ type: 'application/json' }), webhookRouter)
+
+app.use(express.json())
+
+// Xendit webhook uses JSON body - mount after express.json()
+app.post('/webhook/xendit', (req, res) => webhookController.xendit(req, res))
 
 // Health check
 app.get('/health', (_req, res) => {
