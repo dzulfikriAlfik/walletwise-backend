@@ -55,8 +55,6 @@ From [docs/ipa/ipa-checklist.md](ipa/ipa-checklist.md):
 
 | Priority   | Item                  |
 |-----------|------------------------|
-| ~~**High**~~  | ~~CSV/Excel export API~~ ✓   |
-| ~~**High**~~  | ~~Analytics API~~ ✓          |
 | **Medium**| Unit & API tests       |
 | **Medium**| Idempotency docs       |
 | **Lower** | CI pipeline            |
