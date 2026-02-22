@@ -85,6 +85,37 @@ export class PaymentService {
       rawRequest = { userId: input.userId, targetTier: input.targetTier, billingPeriod: input.billingPeriod }
       rawResponse = { sessionId: result.paymentId, url: result.redirectUrl }
     } else if (input.gateway === 'xendit') {
+      // Reuse existing pending invoice if not expired
+      const existingPending = await prisma.payment.findFirst({
+        where: {
+          userId: input.userId,
+          gateway: 'xendit',
+          status: 'pending',
+          targetTier: input.targetTier,
+          billingPeriod: input.billingPeriod,
+        },
+        orderBy: { createdAt: 'desc' },
+      })
+
+      const invoiceUrl = existingPending?.invoiceUrl ?? (existingPending?.rawResponse as { invoiceUrl?: string } | null)?.invoiceUrl
+      if (invoiceUrl && existingPending?.expiresAt && existingPending.expiresAt > new Date()) {
+        return {
+          paymentId: existingPending.id,
+          gatewayRef: existingPending.gatewayRef,
+          status: existingPending.status,
+          invoiceUrl,
+          expiresAt: existingPending.expiresAt.toISOString(),
+          message: 'Reusing existing pending invoice',
+        }
+      }
+
+      if (existingPending?.expiresAt && existingPending.expiresAt <= new Date()) {
+        await prisma.payment.update({
+          where: { id: existingPending.id },
+          data: { status: 'expired', updatedAt: new Date() },
+        })
+      }
+
       result = await createXenditInvoice(input)
       rawRequest = { userId: input.userId, targetTier: input.targetTier, billingPeriod: input.billingPeriod }
       rawResponse = { invoiceUrl: result.invoiceUrl, externalId: result.gatewayRef }
@@ -127,6 +158,8 @@ export class PaymentService {
         currency: input.gateway === 'xendit' ? 'IDR' : 'USD',
         targetTier: input.targetTier,
         billingPeriod: input.billingPeriod,
+        invoiceUrl: result.invoiceUrl,
+        expiresAt: result.expiresAt,
         rawRequest: rawRequest as object,
         rawResponse: rawResponse as object,
       },

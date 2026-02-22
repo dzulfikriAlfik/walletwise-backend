@@ -56,23 +56,25 @@ model Subscription {
 }
 
 model Payment {
-  id           String   @id @default(cuid())
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  gateway      String   // 'stripe' | 'xendit'
-  gatewayRef   String   @unique // External ID from gateway (idempotency key)
-  method       String?  // 'card' | 'invoice' | 'va' | 'ewallet' | 'qris'
-  status       String   @default("pending") // 'pending' | 'paid' | 'failed' | 'expired'
-  amount       Float
-  currency     String   @default("USD")
-  targetTier   String   // 'pro_trial' | 'pro' | 'pro_plus'
-  billingPeriod String  // 'monthly' | 'yearly'
-  rawRequest   Json?    // Request payload sent to gateway
-  rawResponse  Json?    // Response from gateway
-  rawWebhook   Json?    // Last webhook payload received
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gateway       String    // 'stripe' | 'xendit'
+  gatewayRef    String    @unique // External ID from gateway (idempotency key)
+  method        String?   // 'card' | 'invoice' | 'va' | 'ewallet' | 'qris'
+  status        String    @default("pending") // 'pending' | 'paid' | 'failed' | 'expired'
+  amount        Float
+  currency      String    @default("USD")
+  targetTier    String    // 'pro_trial' | 'pro' | 'pro_plus'
+  billingPeriod String    // 'monthly' | 'yearly'
+  invoiceUrl    String?   // Xendit invoice URL (for redirect reuse)
+  expiresAt     DateTime? // Invoice/checkout expiry
+  rawRequest    Json?     // Request payload sent to gateway
+  rawResponse   Json?     // Response from gateway
+  rawWebhook    Json?     // Last webhook payload received
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@index([userId])
   @@index([gatewayRef])
