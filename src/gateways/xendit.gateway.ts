@@ -43,6 +43,8 @@ export async function createXenditInvoice(input: CreatePaymentInput): Promise<Cr
 
   const gatewayRef = `wlw_${input.userId}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
 
+  const successRedirectUrl = env.FRONTEND_URL.replace(/\/$/, '') || undefined
+
   const invoice = await Invoice.createInvoice({
     data: {
       externalId: gatewayRef,
@@ -51,6 +53,7 @@ export async function createXenditInvoice(input: CreatePaymentInput): Promise<Cr
       description: `WalletWise ${input.targetTier} - ${input.billingPeriod}`,
       invoiceDuration: 86400 * 2, // 2 days
       reminderTime: 1,
+      successRedirectUrl,
     },
   })
 
