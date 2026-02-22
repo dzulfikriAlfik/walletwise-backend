@@ -6,6 +6,7 @@
 import { Router } from 'express'
 import { transactionController } from '../../controllers/transaction.controller.js'
 import { verifyToken } from '../../middleware/auth.middleware.js'
+import { requireProPlus } from '../../middleware/subscription.middleware.js'
 
 const router = Router()
 
@@ -15,6 +16,10 @@ router.use(verifyToken)
 // Get transaction summary (must be before /:id to avoid conflict)
 // GET /api/v1/transactions/summary
 router.get('/summary', (req, res, next) => transactionController.getSummary(req, res, next))
+
+// Pro+ endpoints
+router.get('/analytics', requireProPlus, (req, res, next) => transactionController.getAnalytics(req, res, next))
+router.get('/export', requireProPlus, (req, res, next) => transactionController.exportTransactions(req, res, next))
 
 // Get all transactions
 // GET /api/v1/transactions

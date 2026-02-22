@@ -63,6 +63,8 @@ RESTful API for the WalletWise expense tracking SaaS application.
 
 ## API Documentation
 
+All endpoints are versioned under `/api/v1`. For the complete specification, see `GET /api/v1/openapi.yaml` or [docs/openapi/openapi.yaml](docs/openapi/openapi.yaml).
+
 ### Base URL
 - **Local:** `http://localhost:3000/api/v1`
 - **Production:** _Add base URL when deployed_
@@ -78,7 +80,7 @@ All auth responses set `accessToken` and `refreshToken` as httpOnly cookies. Pro
 
 #### Register
 ```http
-POST /api/auth/register
+POST /api/v1/auth/register
 Content-Type: application/json
 
 {
@@ -112,7 +114,7 @@ _Tokens are set in httpOnly cookies._
 
 #### Login
 ```http
-POST /api/auth/login
+POST /api/v1/auth/login
 Content-Type: application/json
 
 {
@@ -132,7 +134,7 @@ _Tokens are set in httpOnly cookies._
 
 #### Refresh Token
 ```http
-POST /api/auth/refresh
+POST /api/v1/auth/refresh
 Cookie: refreshToken=<refreshToken>
 
 Response: 200
@@ -145,7 +147,7 @@ _New access token is set in httpOnly cookie._
 
 #### Get Profile
 ```http
-GET /api/auth/profile
+GET /api/v1/auth/profile
 Cookie: accessToken=<accessToken>
 
 Response: 200
@@ -171,7 +173,7 @@ Response: 200
 
 #### Update Profile
 ```http
-PATCH /api/auth/profile
+PATCH /api/v1/auth/profile
 Cookie: accessToken=<accessToken>
 Content-Type: application/json
 
@@ -188,7 +190,7 @@ Response: 200
 
 #### Logout
 ```http
-POST /api/auth/logout
+POST /api/v1/auth/logout
 Cookie: accessToken=<accessToken>
 
 Response: 200
@@ -207,7 +209,7 @@ _All wallet endpoints require `Cookie: accessToken`._
 
 #### Get Summary
 ```http
-GET /api/wallets/summary
+GET /api/v1/wallets/summary
 
 Response: 200
 { "success": true, "data": { ... } }
@@ -215,7 +217,7 @@ Response: 200
 
 #### Get All Wallets
 ```http
-GET /api/wallets
+GET /api/v1/wallets
 
 Response: 200
 {
@@ -226,7 +228,7 @@ Response: 200
 
 #### Get Wallet by ID
 ```http
-GET /api/wallets/:id
+GET /api/v1/wallets/:id
 
 Response: 200
 { "success": true, "data": { ... } }
@@ -234,7 +236,7 @@ Response: 200
 
 #### Create Wallet
 ```http
-POST /api/wallets
+POST /api/v1/wallets
 Content-Type: application/json
 
 {
@@ -251,7 +253,7 @@ Response: 201
 
 #### Update Wallet
 ```http
-PATCH /api/wallets/:id
+PATCH /api/v1/wallets/:id
 Content-Type: application/json
 
 {
@@ -267,7 +269,7 @@ Response: 200
 
 #### Delete Wallet
 ```http
-DELETE /api/wallets/:id
+DELETE /api/v1/wallets/:id
 
 Response: 204
 ```
@@ -280,7 +282,7 @@ _All transaction endpoints require `Cookie: accessToken`._
 
 #### Get Summary
 ```http
-GET /api/transactions/summary
+GET /api/v1/transactions/summary
 
 Response: 200
 { "success": true, "data": { ... } }
@@ -288,7 +290,7 @@ Response: 200
 
 #### Get All Transactions
 ```http
-GET /api/transactions?walletId=clx...&type=expense&category=food&startDate=2025-02-01&endDate=2025-02-28
+GET /api/v1/transactions?walletId=clx...&type=expense&category=food&startDate=2025-02-01&endDate=2025-02-28
 
 Response: 200
 {
@@ -300,7 +302,7 @@ _Optional query params: `walletId`, `type`, `category`, `startDate`, `endDate`._
 
 #### Get Transaction by ID
 ```http
-GET /api/transactions/:id
+GET /api/v1/transactions/:id
 
 Response: 200
 { "success": true, "data": { ... } }
@@ -308,7 +310,7 @@ Response: 200
 
 #### Create Transaction
 ```http
-POST /api/transactions
+POST /api/v1/transactions
 Content-Type: application/json
 
 {
@@ -326,7 +328,7 @@ Response: 201
 
 #### Update Transaction
 ```http
-PATCH /api/transactions/:id
+PATCH /api/v1/transactions/:id
 Content-Type: application/json
 
 {
@@ -343,7 +345,7 @@ Response: 200
 
 #### Delete Transaction
 ```http
-DELETE /api/transactions/:id
+DELETE /api/v1/transactions/:id
 
 Response: 204
 ```
@@ -354,7 +356,7 @@ Response: 204
 
 #### Get Plans (Public)
 ```http
-GET /api/billing/plans
+GET /api/v1/billing/plans
 
 Response: 200
 {
@@ -369,7 +371,7 @@ Response: 200
 
 #### Upgrade Subscription (Protected)
 ```http
-POST /api/billing/upgrade
+POST /api/v1/billing/upgrade
 Cookie: accessToken=<accessToken>
 Content-Type: application/json
 
@@ -406,7 +408,7 @@ Response: 200
 
 #### Dummy Payment (Protected)
 ```http
-POST /api/billing/dummy-payment
+POST /api/v1/billing/dummy-payment
 Cookie: accessToken=<accessToken>
 Content-Type: application/json
 

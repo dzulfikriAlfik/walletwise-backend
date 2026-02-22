@@ -1,6 +1,18 @@
-# WalletWise Backend – Unimplemented Todos
+# WalletWise Backend – Todos
 
-This document tracks pending tasks and unimplemented items for the WalletWise backend project.
+This document tracks pending tasks and completed items for the WalletWise backend project.
+
+---
+
+## Recently Completed
+
+- [x] CSV/Excel export API (`GET /api/v1/transactions/export?format=csv|excel`)
+- [x] Analytics API (`GET /api/v1/transactions/analytics`) with spending by category, monthly trend
+- [x] `requireProPlus` middleware for Pro+ feature gating
+- [x] OpenAPI 3.1 specification (`docs/openapi/openapi.yaml`)
+- [x] API versioning under `/api/v1` (routes in `src/routes/v1/`)
+- [x] API versioning policy (`docs/API_VERSIONING.md`)
+- [x] Legacy unversioned routes removed (only `/api/v1` available)
 
 ---
 
@@ -34,19 +46,18 @@ From [docs/ipa/ipa-checklist.md](ipa/ipa-checklist.md):
 
 ## Pro+ Features
 
-- [ ] Implement CSV/Excel export API endpoint (Pro+ tier)
-- [ ] Implement analytics API endpoint (Pro+ tier)
+- [x] Implement CSV/Excel export API endpoint (Pro+ tier)
+- [x] Implement analytics API endpoint (Pro+ tier)
 
 ---
 
-## Priority Summary
+## Priority Summary (Pending)
 
-| Priority  | Item                             |
-|----------|-----------------------------------|
-| **High** | OpenAPI 3.1 specification         |
-| **High** | API versioning                    |
-| **Medium** | CSV/Excel export API            |
-| **Medium** | Analytics API                    |
-| **Lower** | Unit & API tests                 |
-| **Lower** | CI pipeline                      |
-| **Lower** | Deployment URLs                  |
+| Priority   | Item                  |
+|-----------|------------------------|
+| ~~**High**~~  | ~~CSV/Excel export API~~ ✓   |
+| ~~**High**~~  | ~~Analytics API~~ ✓          |
+| **Medium**| Unit & API tests       |
+| **Medium**| Idempotency docs       |
+| **Lower** | CI pipeline            |
+| **Lower** | Deployment URLs        |

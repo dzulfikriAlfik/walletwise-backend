@@ -329,6 +329,149 @@ export class TransactionService {
       byCategory,
     }
   }
+
+  /**
+   * Get analytics data for Pro+ users
+   * Spending by category, income vs expense over time, etc.
+   */
+  async getAnalytics(userId: string, filters?: TransactionFilters) {
+    logger.info('Transaction operation: getAnalytics', {
+      userId,
+      filters: filters ? Object.keys(filters) : [],
+    })
+
+    const where: any = { userId }
+
+    if (filters?.walletId) where.walletId = filters.walletId
+    if (filters?.startDate || filters?.endDate) {
+      where.date = {}
+      if (filters.startDate) where.date.gte = filters.startDate
+      if (filters.endDate) where.date.lte = filters.endDate
+    }
+
+    const transactions = await prisma.transaction.findMany({
+      where,
+      include: {
+        wallet: { select: { id: true, name: true, currency: true } },
+      },
+      orderBy: { date: 'asc' },
+    })
+
+    // By category (expense categories only for spending breakdown)
+    const expenseByCategory = new Map<string, number>()
+    const incomeByCategory = new Map<string, number>()
+
+    let totalIncome = 0
+    let totalExpense = 0
+
+    // By month for trend
+    const byMonth = new Map<
+      string,
+      { income: number; expense: number; balance: number }
+    >()
+
+    transactions.forEach((t: any) => {
+      if (t.type === 'income') {
+        totalIncome += t.amount
+        incomeByCategory.set(
+          t.category,
+          (incomeByCategory.get(t.category) ?? 0) + t.amount
+        )
+      } else {
+        totalExpense += t.amount
+        expenseByCategory.set(
+          t.category,
+          (expenseByCategory.get(t.category) ?? 0) + t.amount
+        )
+      }
+
+      const monthKey = t.date.toISOString().slice(0, 7)
+      const month = byMonth.get(monthKey) ?? {
+        income: 0,
+        expense: 0,
+        balance: 0,
+      }
+      if (t.type === 'income') {
+        month.income += t.amount
+      } else {
+        month.expense += t.amount
+      }
+      month.balance = month.income - month.expense
+      byMonth.set(monthKey, month)
+    })
+
+    const spendingByCategory = Array.from(expenseByCategory.entries()).map(
+      ([category, total]) => ({ category, total })
+    )
+    const incomeByCategoryList = Array.from(incomeByCategory.entries()).map(
+      ([category, total]) => ({ category, total })
+    )
+    const monthlyTrend = Array.from(byMonth.entries())
+      .map(([month, data]) => ({ month, ...data }))
+      .sort((a, b) => a.month.localeCompare(b.month))
+
+    return {
+      summary: {
+        totalIncome,
+        totalExpense,
+        balance: totalIncome - totalExpense,
+        transactionCount: transactions.length,
+      },
+      spendingByCategory,
+      incomeByCategory: incomeByCategoryList,
+      monthlyTrend,
+    }
+  }
+
+  /**
+   * Export transactions as CSV or Excel (Pro+)
+   */
+  async exportTransactions(
+    userId: string,
+    format: 'csv' | 'excel',
+    filters?: TransactionFilters
+  ): Promise<{ buffer: Buffer; filename: string; contentType: string }> {
+    logger.info('Transaction operation: exportTransactions', {
+      userId,
+      format,
+      filters: filters ? Object.keys(filters) : [],
+    })
+
+    const transactions = await this.getAll(userId, filters)
+
+    const rows = transactions.map((t: any) => ({
+      Date: t.date.toISOString().slice(0, 10),
+      Type: t.type,
+      Category: t.category,
+      Amount: t.amount,
+      Currency: t.wallet?.currency ?? 'USD',
+      Description: t.description ?? '',
+      Wallet: t.wallet?.name ?? '',
+    }))
+
+    if (format === 'csv') {
+      const XLSX = await import('xlsx')
+      const ws = XLSX.utils.json_to_sheet(rows)
+      const csv = XLSX.utils.sheet_to_csv(ws)
+      const buffer = Buffer.from(csv, 'utf-8')
+      const filename = `transactions-${new Date().toISOString().slice(0, 10)}.csv`
+      return { buffer, filename, contentType: 'text/csv' }
+    }
+
+    // Excel
+    const XLSX = await import('xlsx')
+    const wb = XLSX.utils.book_new()
+    const ws = XLSX.utils.json_to_sheet(rows)
+    XLSX.utils.book_append_sheet(wb, ws, 'Transactions')
+    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
+    const filename = `transactions-${new Date().toISOString().slice(0, 10)}.xlsx`
+    return {
+      buffer,
+      filename,
+      contentType:
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    }
+  }
 }
 
 export const transactionService = new TransactionService()

@@ -186,6 +186,74 @@ export class TransactionController {
       next(error)
     }
   }
+
+  /**
+   * Get analytics (Pro+)
+   * GET /api/v1/transactions/analytics
+   */
+  async getAnalytics(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user?.userId
+
+      if (!userId) {
+        throw new ValidationError('User ID not found in request')
+      }
+
+      const filters = {
+        walletId: req.query.walletId as string | undefined,
+        startDate: req.query.startDate ? new Date(req.query.startDate as string) : undefined,
+        endDate: req.query.endDate ? new Date(req.query.endDate as string) : undefined,
+      }
+
+      const analytics = await transactionService.getAnalytics(userId, filters)
+
+      res.status(200).json({
+        success: true,
+        data: analytics,
+      })
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  /**
+   * Export transactions as CSV or Excel (Pro+)
+   * GET /api/v1/transactions/export?format=csv|excel
+   */
+  async exportTransactions(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user?.userId
+
+      if (!userId) {
+        throw new ValidationError('User ID not found in request')
+      }
+
+      const format = (req.query.format as string) || 'csv'
+      if (format !== 'csv' && format !== 'excel') {
+        throw new ValidationError('Invalid format. Use csv or excel')
+      }
+
+      const filters = {
+        walletId: req.query.walletId as string | undefined,
+        type: req.query.type as 'income' | 'expense' | undefined,
+        category: req.query.category as string | undefined,
+        startDate: req.query.startDate ? new Date(req.query.startDate as string) : undefined,
+        endDate: req.query.endDate ? new Date(req.query.endDate as string) : undefined,
+      }
+
+      const { buffer, filename, contentType } = await transactionService.exportTransactions(
+        userId,
+        format,
+        filters
+      )
+
+      res.setHeader('Content-Type', contentType)
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
+      res.send(buffer)
+    } catch (error) {
+      next(error)
+    }
+  }
 }
 
 export const transactionController = new TransactionController()
