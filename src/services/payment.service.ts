@@ -8,7 +8,6 @@ import { prisma } from '../config/database.js'
 import { ValidationError } from '../utils/errors.js'
 import { logger } from '../utils/logger.js'
 import {
-  WALLET_LIMITS,
   PRO_TRIAL_DAYS,
   SUBSCRIPTION_PRICES,
   type SubscriptionTier,

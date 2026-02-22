@@ -54,7 +54,12 @@ export async function createXenditInvoice(input: CreatePaymentInput): Promise<Cr
     },
   })
 
-  const inv = invoice as { id?: string; externalId?: string; invoiceUrl?: string; expiryDate?: string }
+  const inv = invoice as unknown as {
+    id?: string
+    externalId?: string
+    invoiceUrl?: string
+    expiryDate?: string | Date
+  }
   return {
     paymentId: inv.id ?? gatewayRef,
     gatewayRef: inv.externalId ?? gatewayRef,

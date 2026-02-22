@@ -5,7 +5,6 @@
 
 import Stripe from 'stripe'
 import { env } from '../config/env.js'
-import { SUBSCRIPTION_PRICES } from '../constants/subscription.js'
 import type { CreatePaymentInput, CreatePaymentResult } from '../types/payment.js'
 
 let stripe: Stripe | null = null
@@ -15,7 +14,7 @@ function getStripe(): Stripe {
     if (!env.STRIPE_SECRET_KEY) {
       throw new Error('STRIPE_SECRET_KEY is not configured')
     }
-    stripe = new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2024-11-20.acacia' })
+    stripe = new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2026-01-28.clover' })
   }
   return stripe
 }
@@ -40,15 +39,6 @@ export async function createStripeCheckout(input: CreatePaymentInput): Promise<C
   if (!priceId) {
     throw new Error(`Stripe price not configured for ${priceKey}`)
   }
-
-  const amount =
-    input.targetTier === 'pro'
-      ? input.billingPeriod === 'yearly'
-        ? SUBSCRIPTION_PRICES.pro.yearly
-        : SUBSCRIPTION_PRICES.pro.monthly
-      : input.billingPeriod === 'yearly'
-        ? SUBSCRIPTION_PRICES.pro_plus.yearly
-        : SUBSCRIPTION_PRICES.pro_plus.monthly
 
   const session = await s.checkout.sessions.create({
     mode: 'subscription',
