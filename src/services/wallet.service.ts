@@ -142,6 +142,21 @@ export class WalletService {
       },
     })
 
+    // If initial balance > 0, create an income transaction
+    if (data.balance > 0) {
+      await prisma.transaction.create({
+        data: {
+          walletId: wallet.id,
+          userId,
+          type: 'income',
+          category: 'other_income',
+          amount: data.balance,
+          description: 'Initial balance',
+          date: new Date(),
+        },
+      })
+    }
+
     return wallet
   }
 
@@ -179,6 +194,36 @@ export class WalletService {
         ...(data.icon !== undefined && { icon: data.icon }),
       },
     })
+
+    // If balance changed, create transaction for the difference
+    if (data.balance !== undefined && data.balance !== existingWallet.balance) {
+      const diff = data.balance - existingWallet.balance
+      if (diff > 0) {
+        await prisma.transaction.create({
+          data: {
+            walletId: wallet.id,
+            userId,
+            type: 'income',
+            category: 'other_income',
+            amount: diff,
+            description: 'Balance adjustment (increase)',
+            date: new Date(),
+          },
+        })
+      } else if (diff < 0) {
+        await prisma.transaction.create({
+          data: {
+            walletId: wallet.id,
+            userId,
+            type: 'expense',
+            category: 'other_expense',
+            amount: Math.abs(diff),
+            description: 'Balance adjustment (decrease)',
+            date: new Date(),
+          },
+        })
+      }
+    }
 
     return wallet
   }
