@@ -20,7 +20,11 @@ model User {
   password  String
   avatarUrl String?
   preferredLanguage String @default("en")  // 'en' | 'id'
-  preferredCurrency String @default("USD") // 'USD' | 'IDR'
+  preferredCurrency String @default("USD") // 'USD' | 'IDR' | 'EUR'
+
+  // Transaction display settings
+  transactionTimeRange String @default("weekly") // 'daily' | 'weekly' | 'monthly'
+  firstDayOfWeek       Int    @default(0)        // 0=Sunday, 1=Monday, ..., 6=Saturday
 
   // Relationships
   subscription Subscription?
@@ -118,5 +122,18 @@ model Transaction {
   @@index([userId])
   @@index([date])
   @@map("transactions")
+}
+
+// ============================================
+// FX Rates (cached from external API)
+// ============================================
+
+model FxRate {
+  id        String   @id @default("default")
+  baseCode  String   @default("USD")
+  rates     Json     // { "USD": 1, "IDR": 16862, "EUR": 0.92, ... }
+  updatedAt DateTime @updatedAt
+
+  @@map("fx_rates")
 }
 

@@ -36,6 +36,8 @@ interface UserProfile {
   avatarUrl: string | null
   preferredLanguage: string | null
   preferredCurrency: string | null
+  transactionTimeRange: string
+  firstDayOfWeek: number
   subscription: {
     tier: string
     isActive: boolean
@@ -213,6 +215,21 @@ export class AuthService {
       throw new NotFoundError('User')
     }
 
+    // Fetch transaction settings via raw query (columns may not exist in Prisma client yet)
+    let transactionTimeRange = 'weekly'
+    let firstDayOfWeek = 0
+    try {
+      const row = await prisma.$queryRaw<Array<{ transactionTimeRange: string; firstDayOfWeek: number }>>`
+        SELECT "transactionTimeRange", "firstDayOfWeek" FROM users WHERE id = ${userId}
+      `
+      if (row?.[0]) {
+        transactionTimeRange = row[0].transactionTimeRange ?? 'weekly'
+        firstDayOfWeek = row[0].firstDayOfWeek ?? 0
+      }
+    } catch {
+      // Columns may not exist yet - use defaults
+    }
+
     const sub = user.subscription
     return {
       id: user.id,
@@ -221,6 +238,8 @@ export class AuthService {
       avatarUrl: user.avatarUrl,
       preferredLanguage: user.preferredLanguage,
       preferredCurrency: user.preferredCurrency,
+      transactionTimeRange,
+      firstDayOfWeek,
       subscription: {
         tier: sub?.tier || 'free',
         isActive: sub?.isActive || false,
@@ -236,21 +255,63 @@ export class AuthService {
    */
   async updateProfile(
     userId: string,
-    data: { name?: string; avatarUrl?: string; preferredLanguage?: string; preferredCurrency?: string }
+    data: {
+      name?: string
+      avatarUrl?: string
+      preferredLanguage?: string
+      preferredCurrency?: string
+      transactionTimeRange?: 'daily' | 'weekly' | 'monthly'
+      firstDayOfWeek?: number
+    }
   ): Promise<UserProfile> {
     logger.info('Auth operation: updateProfile', { userId, fields: Object.keys(data) })
+
+    // Build update payload - only include fields Prisma client knows about
+    const prismaData: Record<string, unknown> = {}
+    if (data.name) prismaData.name = data.name
+    if (data.avatarUrl !== undefined) prismaData.avatarUrl = data.avatarUrl
+    if (data.preferredLanguage) prismaData.preferredLanguage = data.preferredLanguage
+    if (data.preferredCurrency) prismaData.preferredCurrency = data.preferredCurrency
+
     const user = await prisma.user.update({
       where: { id: userId },
-      data: {
-        ...(data.name && { name: data.name }),
-        ...(data.avatarUrl !== undefined && { avatarUrl: data.avatarUrl }),
-        ...(data.preferredLanguage && { preferredLanguage: data.preferredLanguage }),
-        ...(data.preferredCurrency && { preferredCurrency: data.preferredCurrency }),
-      },
+      data: prismaData,
       include: {
         subscription: true,
       },
     })
+
+    // Update transaction settings via raw SQL (works even if Prisma client is stale)
+    const wantsTxUpdate =
+      data.transactionTimeRange ||
+      (data.firstDayOfWeek !== undefined && data.firstDayOfWeek >= 0 && data.firstDayOfWeek <= 6)
+    if (wantsTxUpdate) {
+      const tr = data.transactionTimeRange ?? 'weekly'
+      const fdow = data.firstDayOfWeek ?? 0
+      await prisma.$executeRaw`
+        UPDATE users
+        SET "transactionTimeRange" = ${tr}, "firstDayOfWeek" = ${fdow}
+        WHERE id = ${userId}
+      `
+    }
+
+    // Fetch transaction settings from DB for response
+    let transactionTimeRange = 'weekly'
+    let firstDayOfWeek = 0
+    try {
+      const row = await prisma.$queryRaw<Array<{ transactionTimeRange: string; firstDayOfWeek: number }>>`
+        SELECT "transactionTimeRange", "firstDayOfWeek" FROM users WHERE id = ${userId}
+      `
+      if (row?.[0]) {
+        transactionTimeRange = row[0].transactionTimeRange ?? 'weekly'
+        firstDayOfWeek = row[0].firstDayOfWeek ?? 0
+      }
+    } catch {
+      if (wantsTxUpdate) {
+        transactionTimeRange = (data.transactionTimeRange as string) ?? 'weekly'
+        firstDayOfWeek = data.firstDayOfWeek ?? 0
+      }
+    }
 
     const sub = user.subscription
     return {
@@ -260,6 +321,8 @@ export class AuthService {
       avatarUrl: user.avatarUrl,
       preferredLanguage: user.preferredLanguage,
       preferredCurrency: user.preferredCurrency,
+      transactionTimeRange,
+      firstDayOfWeek,
       subscription: {
         tier: sub?.tier || 'free',
         isActive: sub?.isActive || false,

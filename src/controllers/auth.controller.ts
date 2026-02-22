@@ -166,13 +166,22 @@ export class AuthController {
         throw new ValidationError('User ID not found in request')
       }
 
-      const { name, avatarUrl, preferredLanguage, preferredCurrency } = req.body
+      const {
+        name,
+        avatarUrl,
+        preferredLanguage,
+        preferredCurrency,
+        transactionTimeRange,
+        firstDayOfWeek,
+      } = req.body
 
       const profile = await authService.updateProfile(userId, {
         name,
         avatarUrl,
         preferredLanguage,
         preferredCurrency,
+        transactionTimeRange,
+        firstDayOfWeek,
       })
 
       res.status(200).json({
