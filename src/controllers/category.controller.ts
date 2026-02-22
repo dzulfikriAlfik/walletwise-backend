@@ -92,10 +92,13 @@ export async function create(req: Request, res: Response, next: NextFunction): P
 export async function update(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const userId = req.user?.userId
-    const categoryId = req.params.id
+    const categoryId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id
 
     if (!userId) {
       throw new ValidationError('User ID not found in request')
+    }
+    if (!categoryId || typeof categoryId !== 'string') {
+      throw new ValidationError('Category ID is required')
     }
 
     const validationResult = updateCategorySchema.safeParse(req.body)
@@ -127,10 +130,13 @@ export async function update(req: Request, res: Response, next: NextFunction): P
 export async function remove(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const userId = req.user?.userId
-    const categoryId = req.params.id
+    const categoryId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id
 
     if (!userId) {
       throw new ValidationError('User ID not found in request')
+    }
+    if (!categoryId || typeof categoryId !== 'string') {
+      throw new ValidationError('Category ID is required')
     }
 
     await categoryService.deleteCategory(userId, categoryId)
