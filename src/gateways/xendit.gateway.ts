@@ -43,7 +43,9 @@ export async function createXenditInvoice(input: CreatePaymentInput): Promise<Cr
 
   const gatewayRef = `wlw_${input.userId}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
 
-  const successRedirectUrl = env.FRONTEND_URL.replace(/\/$/, '') || undefined
+  const baseUrl = env.FRONTEND_URL.replace(/\/$/, '')
+  const tierParam = encodeURIComponent(input.targetTier)
+  const successRedirectUrl = baseUrl ? `${baseUrl}/transactions?xenditPayment=success&tier=${tierParam}` : undefined
 
   const invoice = await Invoice.createInvoice({
     data: {
