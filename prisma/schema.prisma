@@ -26,6 +26,7 @@ model User {
   subscription Subscription?
   wallets      Wallet[]
   transactions Transaction[]
+  categories   Category[]
 
   // Timestamps
   createdAt DateTime @default(now())
@@ -73,6 +74,24 @@ model Wallet {
   @@unique([userId, name])
   @@index([userId])
   @@map("wallets")
+}
+
+// ============================================
+// Category Models (Pro / Pro Trial)
+// ============================================
+
+model Category {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  type      String   // 'income' | 'expense'
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, name, type])
+  @@index([userId])
+  @@map("categories")
 }
 
 // ============================================

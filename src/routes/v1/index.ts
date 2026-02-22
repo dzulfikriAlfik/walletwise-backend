@@ -9,6 +9,7 @@ import authRoutes from './auth.routes.js'
 import walletRoutes from './wallet.routes.js'
 import transactionRoutes from './transaction.routes.js'
 import billingRoutes from './billing.routes.js'
+import categoryRoutes from './category.routes.js'
 
 const v1Router = express.Router()
 
@@ -16,6 +17,7 @@ v1Router.use('/auth', authRoutes)
 v1Router.use('/wallets', walletRoutes)
 v1Router.use('/transactions', transactionRoutes)
 v1Router.use('/billing', billingRoutes)
+v1Router.use('/categories', categoryRoutes)
 
 // Serve OpenAPI 3.1 specification
 v1Router.get('/openapi.yaml', (_req, res) => {

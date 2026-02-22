@@ -6,6 +6,7 @@ This document tracks pending tasks and completed items for the WalletWise backen
 
 ## Recently Completed
 
+- [x] Category CRUD API (`GET/POST/PATCH/DELETE /api/v1/categories`) – Pro/Pro Trial gated
 - [x] CSV/Excel export API (`GET /api/v1/transactions/export?format=csv|excel`)
 - [x] Analytics API (`GET /api/v1/transactions/analytics`) with spending by category, monthly trend
 - [x] `requireProPlus` middleware for Pro+ feature gating
@@ -48,6 +49,10 @@ From [docs/ipa/ipa-checklist.md](ipa/ipa-checklist.md):
 
 - [x] Implement CSV/Excel export API endpoint (Pro+ tier)
 - [x] Implement analytics API endpoint (Pro+ tier)
+
+## Pro / Pro Trial Features
+
+- [x] Custom category CRUD API (Pro / active Pro Trial)
 
 ---
 

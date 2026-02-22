@@ -12,6 +12,7 @@ RESTful API for the WalletWise expense tracking SaaS application.
 │  ├── /api/v1/auth        (register, login, refresh, profile, logout)     │
 │  ├── /api/v1/wallets     (CRUD, summary)                                 │
 │  ├── /api/v1/transactions (CRUD, summary)                                │
+│  ├── /api/v1/categories  (CRUD custom categories, Pro/Pro Trial)         │
 │  ├── /api/v1/billing     (plans, upgrade, dummy-payment)                 │
 │  └── /api/v1/openapi.yaml (OpenAPI 3.1 specification)                    │
 ├──────────────────────────────────────────────────────────────────────────┤
@@ -50,16 +51,17 @@ RESTful API for the WalletWise expense tracking SaaS application.
 - Wallet summary (aggregate stats)
 - Transaction management (CRUD)
 - Transaction summary (aggregate stats)
+- Category CRUD (Pro / Pro Trial) – custom income and expense categories
 - Subscription tiers (free, pro_trial, pro, pro_plus)
 - Billing API (plans, upgrade, dummy payment for demo)
 
 ### Subscription Rules
-| Tier | Max Wallets | Features |
-|------|-------------|----------|
-| Free | 3 | Transaction tracking, basic summary |
-| Pro Trial | Unlimited (7 days) | Same as Pro, one-time trial |
-| Pro | Unlimited | $9.99/mo or $99.99/yr |
-| Pro+ | Unlimited | Analytics, CSV/Excel export; $19.99/mo or $199.99/yr |
+| Tier | Max Wallets | Custom Categories | Features |
+|------|-------------|-------------------|----------|
+| Free | 3 | System only | Transaction tracking, basic summary |
+| Pro Trial | Unlimited (7 days) | Yes (while active) | Same as Pro, one-time trial |
+| Pro | Unlimited | Yes | $9.99/mo or $99.99/yr |
+| Pro+ | Unlimited | Yes | Analytics, CSV/Excel export; $19.99/mo or $199.99/yr |
 
 ## API Documentation
 
