@@ -31,16 +31,16 @@ From [docs/ipa/ipa-checklist.md](ipa/ipa-checklist.md):
 - [x] Create OpenAPI 3.1 specification
 - [x] Implement API versioning (e.g. `/v1`, `/v2`)
 - [x] Document API versioning policy
-- [ ] Identify and document idempotency rules for applicable operations
+- [x] Identify and document idempotency rules for applicable operations (`docs/IDEMPOTENCY.md`)
 
 ---
 
 ## Testing
 
-- [ ] Add unit tests for core business logic
-- [ ] Add API / integration tests for all public endpoints
-- [ ] Add schema validation tests
-- [ ] Add error handling tests
+- [x] Add unit tests for core business logic
+- [x] Add API / integration tests for all public endpoints
+- [x] Add schema validation tests
+- [x] Add error handling tests
 - [ ] Configure CI pipeline to run tests automatically
 
 ---
@@ -60,7 +60,7 @@ From [docs/ipa/ipa-checklist.md](ipa/ipa-checklist.md):
 
 | Priority   | Item                  |
 |-----------|------------------------|
-| **Medium**| Unit & API tests       |
-| **Medium**| Idempotency docs       |
+| ~~Medium~~| ~~Unit & API tests~~   |
+| ~~Medium~~| ~~Idempotency docs~~   |
 | **Lower** | CI pipeline            |
 | **Lower** | Deployment URLs        |
