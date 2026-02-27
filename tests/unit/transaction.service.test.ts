@@ -215,5 +215,122 @@ describe('TransactionService', () => {
       expect(result.balance).toBe(0)
       expect(result.transactionCount).toBe(0)
     })
+
+    it('should apply walletId and date filters', async () => {
+      prismaMock.transaction.findMany.mockResolvedValue([])
+      const startDate = new Date('2025-01-01')
+      const endDate = new Date('2025-01-31')
+
+      await transactionService.getSummary('test-user-id', {
+        walletId: 'wallet-1',
+        startDate,
+        endDate,
+      })
+
+      expect(prismaMock.transaction.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            userId: 'test-user-id',
+            walletId: 'wallet-1',
+            date: { gte: startDate, lte: endDate },
+          }),
+        })
+      )
+    })
+  })
+
+  describe('getAnalytics', () => {
+    it('should return analytics with spending by category', async () => {
+      const transactions = [
+        {
+          type: 'expense',
+          category: 'food',
+          amount: 100,
+          date: new Date('2025-01-15'),
+          wallet: { id: 'w1', name: 'Main', currency: 'USD' },
+        },
+        {
+          type: 'income',
+          category: 'salary',
+          amount: 5000,
+          date: new Date('2025-01-15'),
+          wallet: { id: 'w1', name: 'Main', currency: 'USD' },
+        },
+      ]
+      prismaMock.transaction.findMany.mockResolvedValue(transactions)
+
+      const result = await transactionService.getAnalytics('test-user-id')
+
+      expect(result.summary.totalIncome).toBe(5000)
+      expect(result.summary.totalExpense).toBe(100)
+      expect(result.spendingByCategory).toHaveLength(1)
+      expect(result.incomeByCategory).toHaveLength(1)
+      expect(result.monthlyTrend).toBeDefined()
+    })
+
+    it('should apply walletId and date filters in getAnalytics', async () => {
+      prismaMock.transaction.findMany.mockResolvedValue([])
+      const startDate = new Date('2025-01-01')
+      const endDate = new Date('2025-01-31')
+
+      await transactionService.getAnalytics('test-user-id', {
+        walletId: 'wallet-1',
+        startDate,
+        endDate,
+      })
+
+      expect(prismaMock.transaction.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            userId: 'test-user-id',
+            walletId: 'wallet-1',
+            date: { gte: startDate, lte: endDate },
+          }),
+        })
+      )
+    })
+
+    it('should handle multiple months in monthly trend', async () => {
+      const transactions = [
+        {
+          type: 'expense',
+          category: 'food',
+          amount: 50,
+          date: new Date('2025-01-10'),
+          wallet: { id: 'w1', name: 'Main', currency: 'USD' },
+        },
+        {
+          type: 'expense',
+          category: 'transport',
+          amount: 30,
+          date: new Date('2025-02-15'),
+          wallet: { id: 'w1', name: 'Main', currency: 'USD' },
+        },
+      ]
+      prismaMock.transaction.findMany.mockResolvedValue(transactions)
+
+      const result = await transactionService.getAnalytics('test-user-id')
+
+      expect(result.monthlyTrend.length).toBeGreaterThanOrEqual(1)
+      expect(result.spendingByCategory).toHaveLength(2)
+    })
+  })
+
+  describe('exportTransactions', () => {
+    it('should export as Excel when format is excel', async () => {
+      prismaMock.transaction.findMany.mockResolvedValue([
+        createMockTransaction({ type: 'expense', amount: 50 }),
+      ])
+
+      const result = await transactionService.exportTransactions(
+        'test-user-id',
+        'excel',
+        {}
+      )
+
+      expect(result.contentType).toContain('spreadsheetml')
+      expect(result.filename).toContain('.xlsx')
+      expect(Buffer.isBuffer(result.buffer)).toBe(true)
+    })
   })
 })

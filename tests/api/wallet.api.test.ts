@@ -118,6 +118,41 @@ describe('Wallet API Endpoints', () => {
     })
   })
 
+  describe('PATCH /api/v1/wallets/:id', () => {
+    it('should return 200 for valid update', async () => {
+      const wallet = createMockWallet({ balance: 100 })
+      prismaMock.wallet.findUnique
+        .mockResolvedValueOnce(wallet)
+        .mockResolvedValueOnce(null)
+      prismaMock.wallet.update.mockResolvedValue({
+        ...wallet,
+        balance: 200,
+      })
+      prismaMock.transaction.create.mockResolvedValue({})
+
+      const res = await request
+        .patch('/api/v1/wallets/test-wallet-id')
+        .set('Cookie', `accessToken=${token}`)
+        .send({ balance: 200 })
+        .expect(200)
+
+      expect(res.body.success).toBe(true)
+      expect(res.body.data.balance).toBe(200)
+    })
+
+    it('should return 400 for invalid update data', async () => {
+      prismaMock.wallet.findUnique.mockResolvedValue(createMockWallet())
+
+      const res = await request
+        .patch('/api/v1/wallets/test-wallet-id')
+        .set('Cookie', `accessToken=${token}`)
+        .send({ name: 'A' })
+        .expect(400)
+
+      expect(res.body.error.code).toBe('VALIDATION_ERROR')
+    })
+  })
+
   describe('DELETE /api/v1/wallets/:id', () => {
     it('should return 200 for successful deletion', async () => {
       prismaMock.wallet.findUnique.mockResolvedValue(createMockWallet())

@@ -120,6 +120,45 @@ describe('CategoryService', () => {
         updateCategory('test-user-id', 'test-category-id', { name: 'New' })
       ).rejects.toThrow('You do not have access to this category')
     })
+
+    it('should throw ConflictError when updating to duplicate name', async () => {
+      const existing = createMockCategory({
+        id: 'cat-1',
+        name: 'Food',
+        type: 'expense',
+      })
+      const duplicate = createMockCategory({
+        id: 'cat-2',
+        name: 'Groceries',
+        type: 'expense',
+      })
+      prismaMock.category.findUnique.mockResolvedValue(existing)
+      prismaMock.category.findFirst.mockResolvedValue(duplicate)
+
+      await expect(
+        updateCategory('test-user-id', 'cat-1', { name: 'Groceries' })
+      ).rejects.toThrow(/already exists/)
+    })
+
+    it('should update type only when name not provided', async () => {
+      const existing = createMockCategory({
+        id: 'cat-1',
+        name: 'Food',
+        type: 'expense',
+      })
+      prismaMock.category.findUnique.mockResolvedValue(existing)
+      prismaMock.category.findFirst.mockResolvedValue(null)
+      prismaMock.category.update.mockResolvedValue({
+        ...existing,
+        type: 'income',
+      })
+
+      const result = await updateCategory('test-user-id', 'cat-1', {
+        type: 'income',
+      })
+
+      expect(result.type).toBe('income')
+    })
   })
 
   describe('deleteCategory', () => {

@@ -2,6 +2,7 @@
  * Test setup
  * Set environment variables before any module loads
  */
+/// <reference types="jest" />
 
 process.env.NODE_ENV = 'test'
 process.env.JWT_SECRET = 'test-jwt-secret-key-for-testing'

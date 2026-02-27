@@ -114,5 +114,64 @@ describe('BillingService', () => {
         })
       ).rejects.toThrow('User not found')
     })
+
+    it('should reject Pro trial if user is on Pro', async () => {
+      const user = createMockUser({
+        subscription: createMockSubscription({ tier: 'pro' }),
+      })
+      prismaMock.user.findUnique.mockResolvedValue(user)
+
+      await expect(
+        billingService.upgradeSubscription('test-user-id', {
+          targetTier: 'pro_trial',
+          billingPeriod: 'monthly',
+          useTrial: false,
+        })
+      ).rejects.toThrow(/Pro trial is only available for Free plan/)
+    })
+
+    it('should upgrade free user to Pro yearly', async () => {
+      const user = createMockUser({
+        subscription: createMockSubscription({ tier: 'free' }),
+      })
+      prismaMock.user.findUnique.mockResolvedValue(user)
+      prismaMock.$queryRaw.mockResolvedValue([
+        {
+          id: 'sub-1',
+          userId: 'test-user-id',
+          tier: 'pro',
+          isActive: true,
+          startDate: new Date(),
+          endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ])
+
+      const result = await billingService.upgradeSubscription('test-user-id', {
+        targetTier: 'pro',
+        billingPeriod: 'yearly',
+        useTrial: false,
+      })
+
+      expect(result.subscription.tier).toBe('pro')
+      expect(result.payment.amount).toBe(99.99)
+      expect(result.payment.billingPeriod).toBe('yearly')
+    })
+
+    it('should reject if already on Pro+ and trying to upgrade to Pro+', async () => {
+      const user = createMockUser({
+        subscription: createMockSubscription({ tier: 'pro_plus' }),
+      })
+      prismaMock.user.findUnique.mockResolvedValue(user)
+
+      await expect(
+        billingService.upgradeSubscription('test-user-id', {
+          targetTier: 'pro_plus',
+          billingPeriod: 'monthly',
+          useTrial: false,
+        })
+      ).rejects.toThrow('Already on Pro+')
+    })
   })
 })

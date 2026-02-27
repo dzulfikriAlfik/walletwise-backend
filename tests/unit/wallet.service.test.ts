@@ -194,4 +194,154 @@ describe('WalletService', () => {
       expect(result.totalWallets).toBe(0)
     })
   })
+
+  describe('create - pro_trial branches', () => {
+    const createData = {
+      name: 'Savings',
+      balance: 0,
+      currency: 'USD',
+    }
+
+    it('should throw TrialExpiredError when pro_trial expired and at limit', async () => {
+      const pastDate = new Date()
+      pastDate.setDate(pastDate.getDate() - 7)
+      prismaMock.user.findUnique.mockResolvedValue(createMockUser())
+      prismaMock.$queryRaw.mockResolvedValue([
+        { tier: 'pro_trial', startDate: new Date(), endDate: pastDate },
+      ])
+      prismaMock.wallet.count.mockResolvedValue(3)
+
+      await expect(
+        walletService.create('test-user-id', createData)
+      ).rejects.toThrow(/Pro trial has ended/)
+    })
+
+    it('should allow pro_trial user unlimited wallets when trial active', async () => {
+      const futureDate = new Date()
+      futureDate.setDate(futureDate.getDate() + 7)
+      prismaMock.user.findUnique.mockResolvedValue(createMockUser())
+      prismaMock.$queryRaw.mockResolvedValue([
+        { tier: 'pro_trial', startDate: new Date(), endDate: futureDate },
+      ])
+      prismaMock.wallet.count.mockResolvedValue(10)
+      prismaMock.wallet.findUnique.mockResolvedValue(null)
+      prismaMock.wallet.create.mockResolvedValue(
+        createMockWallet({ name: 'Savings', balance: 0 })
+      )
+
+      const result = await walletService.create('test-user-id', createData)
+
+      expect(result.name).toBe('Savings')
+    })
+
+    it('should allow pro_trial with no endDate as active (unlimited)', async () => {
+      prismaMock.user.findUnique.mockResolvedValue(createMockUser())
+      prismaMock.$queryRaw.mockResolvedValue([
+        { tier: 'pro_trial', startDate: new Date(), endDate: null },
+      ])
+      prismaMock.wallet.count.mockResolvedValue(5)
+      prismaMock.wallet.findUnique.mockResolvedValue(null)
+      prismaMock.wallet.create.mockResolvedValue(
+        createMockWallet({ name: 'Savings', balance: 0 })
+      )
+
+      const result = await walletService.create('test-user-id', createData)
+
+      expect(result.name).toBe('Savings')
+    })
+
+    it('should use free limit when subRow is empty', async () => {
+      prismaMock.user.findUnique.mockResolvedValue(createMockUser())
+      prismaMock.$queryRaw.mockResolvedValue([])
+      prismaMock.wallet.count.mockResolvedValue(1)
+      prismaMock.wallet.findUnique.mockResolvedValue(null)
+      prismaMock.wallet.create.mockResolvedValue(
+        createMockWallet({ name: 'Savings', balance: 0 })
+      )
+
+      const result = await walletService.create('test-user-id', createData)
+
+      expect(result.name).toBe('Savings')
+    })
+  })
+
+  describe('update', () => {
+    it('should update wallet and create income transaction when balance increases', async () => {
+      const existingWallet = createMockWallet({
+        id: 'w1',
+        balance: 100,
+        name: 'Main',
+      })
+      prismaMock.wallet.findUnique
+        .mockResolvedValueOnce(existingWallet)
+        .mockResolvedValueOnce(null)
+      prismaMock.wallet.update.mockResolvedValue({
+        ...existingWallet,
+        balance: 200,
+      })
+      prismaMock.transaction.create.mockResolvedValue({})
+
+      const result = await walletService.update('test-user-id', 'w1', {
+        balance: 200,
+      })
+
+      expect(result.balance).toBe(200)
+      expect(prismaMock.transaction.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            type: 'income',
+            amount: 100,
+            description: 'Balance adjustment (increase)',
+          }),
+        })
+      )
+    })
+
+    it('should update wallet and create expense transaction when balance decreases', async () => {
+      const existingWallet = createMockWallet({
+        id: 'w1',
+        balance: 200,
+        name: 'Main',
+      })
+      prismaMock.wallet.findUnique
+        .mockResolvedValueOnce(existingWallet)
+        .mockResolvedValueOnce(null)
+      prismaMock.wallet.update.mockResolvedValue({
+        ...existingWallet,
+        balance: 100,
+      })
+      prismaMock.transaction.create.mockResolvedValue({})
+
+      const result = await walletService.update('test-user-id', 'w1', {
+        balance: 100,
+      })
+
+      expect(result.balance).toBe(100)
+      expect(prismaMock.transaction.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            type: 'expense',
+            amount: 100,
+            description: 'Balance adjustment (decrease)',
+          }),
+        })
+      )
+    })
+
+    it('should throw ConflictError when updating to duplicate name', async () => {
+      const existingWallet = createMockWallet({
+        id: 'w1',
+        name: 'Main',
+        balance: 100,
+      })
+      const duplicateWallet = createMockWallet({ name: 'Savings' })
+      prismaMock.wallet.findUnique
+        .mockResolvedValueOnce(existingWallet)
+        .mockResolvedValueOnce(duplicateWallet)
+
+      await expect(
+        walletService.update('test-user-id', 'w1', { name: 'Savings' })
+      ).rejects.toThrow('Wallet with this name already exists')
+    })
+  })
 })

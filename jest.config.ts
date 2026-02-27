@@ -26,10 +26,10 @@ const config: Config = {
   ],
   coverageThreshold: {
     global: {
-      branches: 25,
-      functions: 50,
-      lines: 50,
-      statements: 50,
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80,
     },
   },
   // Silence logger during tests

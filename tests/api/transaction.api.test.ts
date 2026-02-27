@@ -4,7 +4,12 @@
 
 import '../setup'
 import { prismaMock, resetAllMocks } from '../mocks/prisma.mock'
-import { createMockTransaction, createMockWallet, generateTestAccessToken } from '../helpers'
+import {
+  createMockTransaction,
+  createMockWallet,
+  createMockSubscription,
+  generateTestAccessToken,
+} from '../helpers'
 
 import supertest from 'supertest'
 import app from '../../src/app'
@@ -150,6 +155,130 @@ describe('Transaction API Endpoints', () => {
       expect(res.body.success).toBe(true)
       expect(res.body.data.totalIncome).toBe(5000)
       expect(res.body.data.totalExpense).toBe(200)
+    })
+  })
+
+  describe('PATCH /api/v1/transactions/:id', () => {
+    it('should return 200 for valid update', async () => {
+      const wallet = createMockWallet({ id: 'wallet-1' })
+      prismaMock.transaction.findUnique.mockResolvedValue(
+        createMockTransaction({ id: 'tx-1', walletId: 'wallet-1' })
+      )
+      prismaMock.wallet.findUnique.mockResolvedValue(wallet)
+      prismaMock.$transaction.mockImplementation(async (fn: any) => {
+        return fn({
+          transaction: {
+            findUnique: jest.fn().mockResolvedValue(createMockTransaction()),
+            update: jest.fn().mockResolvedValue(
+              createMockTransaction({ amount: 75, description: 'Updated' })
+            ),
+          },
+          wallet: { update: jest.fn().mockResolvedValue({}) },
+        })
+      })
+
+      const res = await request
+        .patch('/api/v1/transactions/tx-1')
+        .set('Cookie', `accessToken=${token}`)
+        .send({ amount: 75, description: 'Updated' })
+        .expect(200)
+
+      expect(res.body.success).toBe(true)
+      expect(res.body.data.amount).toBe(75)
+    })
+  })
+
+  describe('GET /api/v1/transactions/analytics', () => {
+    it('should return 403 for free user', async () => {
+      prismaMock.subscription.findUnique.mockResolvedValue(
+        createMockSubscription({ tier: 'free' })
+      )
+
+      const res = await request
+        .get('/api/v1/transactions/analytics')
+        .set('Cookie', `accessToken=${token}`)
+        .expect(403)
+
+      expect(res.body.error.code).toBe('AUTHORIZATION_ERROR')
+    })
+
+    it('should return 200 with analytics for pro_plus user', async () => {
+      prismaMock.subscription.findUnique.mockResolvedValue(
+        createMockSubscription({ tier: 'pro_plus' })
+      )
+      prismaMock.transaction.findMany.mockResolvedValue([
+        createMockTransaction({ type: 'expense', category: 'food', amount: 200 }),
+      ])
+
+      const res = await request
+        .get('/api/v1/transactions/analytics')
+        .set('Cookie', `accessToken=${token}`)
+        .expect(200)
+
+      expect(res.body.success).toBe(true)
+      expect(res.body.data).toBeDefined()
+    })
+  })
+
+  describe('GET /api/v1/transactions/export', () => {
+    it('should return 403 for free user', async () => {
+      prismaMock.subscription.findUnique.mockResolvedValue(
+        createMockSubscription({ tier: 'free' })
+      )
+
+      const res = await request
+        .get('/api/v1/transactions/export?format=csv')
+        .set('Cookie', `accessToken=${token}`)
+        .expect(403)
+
+      expect(res.body.error.code).toBe('AUTHORIZATION_ERROR')
+    })
+
+    it('should return 200 with CSV for pro_plus user', async () => {
+      prismaMock.subscription.findUnique.mockResolvedValue(
+        createMockSubscription({ tier: 'pro_plus' })
+      )
+      prismaMock.transaction.findMany.mockResolvedValue([
+        createMockTransaction({ type: 'expense', amount: 50 }),
+      ])
+
+      const res = await request
+        .get('/api/v1/transactions/export?format=csv')
+        .set('Cookie', `accessToken=${token}`)
+        .expect(200)
+
+      expect(res.headers['content-type']).toContain('text/csv')
+      expect(res.headers['content-disposition']).toContain('attachment')
+    })
+
+    it('should return 200 with Excel for pro_plus user', async () => {
+      prismaMock.subscription.findUnique.mockResolvedValue(
+        createMockSubscription({ tier: 'pro_plus' })
+      )
+      prismaMock.transaction.findMany.mockResolvedValue([
+        createMockTransaction({ type: 'expense', amount: 50 }),
+      ])
+
+      const res = await request
+        .get('/api/v1/transactions/export?format=excel')
+        .set('Cookie', `accessToken=${token}`)
+        .expect(200)
+
+      expect(res.headers['content-type']).toContain('spreadsheetml')
+      expect(res.headers['content-disposition']).toContain('.xlsx')
+    })
+
+    it('should return 400 for invalid format', async () => {
+      prismaMock.subscription.findUnique.mockResolvedValue(
+        createMockSubscription({ tier: 'pro_plus' })
+      )
+
+      const res = await request
+        .get('/api/v1/transactions/export?format=pdf')
+        .set('Cookie', `accessToken=${token}`)
+        .expect(400)
+
+      expect(res.body.error.code).toBe('VALIDATION_ERROR')
     })
   })
 })

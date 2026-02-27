@@ -36,8 +36,25 @@ describe('Environment Config', () => {
     expect(typeof env.CORS_ORIGIN).toBe('string')
   })
 
-  it('should have DATABASE_URL', async () => {
+  it('should have DATABASE_URL built from components when not set', async () => {
+    const orig = process.env.DATABASE_URL
+    delete process.env.DATABASE_URL
+    jest.resetModules()
     const { env } = await import('../../src/config/env')
     expect(env.DATABASE_URL).toContain('postgresql://')
+    expect(env.DATABASE_URL).toContain('testuser')
+    process.env.DATABASE_URL = orig
+    jest.resetModules()
+  })
+
+  it('should use DATABASE_URL from env when explicitly set', async () => {
+    const customUrl = 'postgresql://custom:pass@host:5432/dbname'
+    const orig = process.env.DATABASE_URL
+    process.env.DATABASE_URL = customUrl
+    jest.resetModules()
+    const { env } = await import('../../src/config/env')
+    expect(env.DATABASE_URL).toBe(customUrl)
+    process.env.DATABASE_URL = orig
+    jest.resetModules()
   })
 })

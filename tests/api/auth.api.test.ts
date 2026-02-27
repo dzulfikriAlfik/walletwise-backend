@@ -5,7 +5,11 @@
 
 import '../setup'
 import { prismaMock, resetAllMocks } from '../mocks/prisma.mock'
-import { createMockUser, createMockSubscription, generateTestAccessToken } from '../helpers'
+import {
+  createMockUser,
+  createMockSubscription,
+  generateTestAccessToken,
+} from '../helpers'
 
 // Mock bcryptjs
 jest.mock('bcryptjs', () => ({
@@ -188,6 +192,91 @@ describe('Auth API Endpoints', () => {
 
       expect(res.body.success).toBe(true)
       expect(res.body.message).toBe('Logged out successfully')
+    })
+  })
+
+  describe('POST /api/v1/auth/refresh', () => {
+    it('should return 400 when refresh token missing', async () => {
+      const res = await request.post('/api/v1/auth/refresh').expect(400)
+
+      expect(res.body.error.code).toBe('VALIDATION_ERROR')
+    })
+
+    it('should return 200 with new access token', async () => {
+      const { generateTestRefreshToken } = await import('../helpers')
+      const refreshToken = generateTestRefreshToken()
+      const mockUser = createMockUser({
+        subscription: createMockSubscription(),
+      })
+      prismaMock.user.findUnique.mockResolvedValue(mockUser)
+
+      const res = await request
+        .post('/api/v1/auth/refresh')
+        .set('Cookie', `refreshToken=${refreshToken}`)
+        .expect(200)
+
+      expect(res.body.success).toBe(true)
+      expect(res.body.message).toBe('Token refreshed successfully')
+      expect(res.headers['set-cookie']).toBeDefined()
+    })
+  })
+
+  describe('PATCH /api/v1/auth/profile', () => {
+    it('should return 200 for valid profile update', async () => {
+      const mockUser = createMockUser({
+        subscription: createMockSubscription(),
+      })
+      const updatedUser = {
+        ...mockUser,
+        name: 'Updated Name',
+        preferredCurrency: 'IDR',
+        subscription: createMockSubscription(),
+      }
+      prismaMock.user.update.mockResolvedValue(updatedUser)
+      prismaMock.$queryRaw.mockResolvedValue([
+        { transactionTimeRange: 'weekly', firstDayOfWeek: 0 },
+      ])
+
+      const token = generateTestAccessToken()
+
+      const res = await request
+        .patch('/api/v1/auth/profile')
+        .set('Cookie', `accessToken=${token}`)
+        .send({ name: 'Updated Name', preferredCurrency: 'IDR' })
+        .expect(200)
+
+      expect(res.body.success).toBe(true)
+      expect(res.body.data.name).toBe('Updated Name')
+    })
+
+    it('should return 200 when updating transaction settings', async () => {
+      const mockUser = createMockUser({
+        subscription: createMockSubscription(),
+      })
+      const updatedUser = {
+        ...mockUser,
+        subscription: createMockSubscription(),
+      }
+      prismaMock.user.update.mockResolvedValue(updatedUser)
+      prismaMock.$executeRaw.mockResolvedValue(0)
+      prismaMock.$queryRaw.mockResolvedValue([
+        { transactionTimeRange: 'monthly', firstDayOfWeek: 1 },
+      ])
+
+      const token = generateTestAccessToken()
+
+      const res = await request
+        .patch('/api/v1/auth/profile')
+        .set('Cookie', `accessToken=${token}`)
+        .send({
+          transactionTimeRange: 'monthly',
+          firstDayOfWeek: 1,
+        })
+        .expect(200)
+
+      expect(res.body.success).toBe(true)
+      expect(res.body.data.transactionTimeRange).toBe('monthly')
+      expect(res.body.data.firstDayOfWeek).toBe(1)
     })
   })
 })

@@ -188,3 +188,29 @@ describe('AuthService', () => {
     })
   })
 })
+
+describe('AuthService updateProfile - $queryRaw catch branch', () => {
+  beforeEach(() => {
+    resetAllMocks()
+  })
+
+  it('should use wantsTxUpdate values when $queryRaw throws', async () => {
+    const { authService } = await import('../../src/services/auth.service')
+
+    const user = createMockUser({ subscription: createMockSubscription() })
+    prismaMock.user.update.mockResolvedValue({
+      ...user,
+      subscription: createMockSubscription(),
+    })
+    prismaMock.$executeRaw.mockResolvedValue(0)
+    prismaMock.$queryRaw.mockRejectedValue(new Error('DB error'))
+
+    const result = await authService.updateProfile('test-user-id', {
+      transactionTimeRange: 'monthly',
+      firstDayOfWeek: 1,
+    })
+
+    expect(result.transactionTimeRange).toBe('monthly')
+    expect(result.firstDayOfWeek).toBe(1)
+  })
+})
