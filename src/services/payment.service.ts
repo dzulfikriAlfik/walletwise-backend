@@ -14,6 +14,7 @@ import {
 } from '../constants/subscription.js'
 import { createStripeCheckout } from '../gateways/stripe.gateway.js'
 import { createXenditInvoice } from '../gateways/xendit.gateway.js'
+import { createMidtransSnapTransaction } from '../gateways/midtrans.gateway.js'
 import type { CreatePaymentInput } from '../types/payment.js'
 
 export class PaymentService {
@@ -119,6 +120,10 @@ export class PaymentService {
       result = await createXenditInvoice(input)
       rawRequest = { userId: input.userId, targetTier: input.targetTier, billingPeriod: input.billingPeriod }
       rawResponse = { invoiceUrl: result.invoiceUrl, externalId: result.gatewayRef }
+    } else if (input.gateway === 'midtrans') {
+      result = await createMidtransSnapTransaction(input)
+      rawRequest = { userId: input.userId, targetTier: input.targetTier, billingPeriod: input.billingPeriod }
+      rawResponse = { redirectUrl: result.redirectUrl, orderId: result.gatewayRef }
     } else {
       throw new ValidationError('Invalid payment gateway')
     }
@@ -155,7 +160,7 @@ export class PaymentService {
         method: input.method,
         status: result.status,
         amount,
-        currency: input.gateway === 'xendit' ? 'IDR' : 'USD',
+        currency: input.gateway === 'xendit' || input.gateway === 'midtrans' ? 'IDR' : 'USD',
         targetTier: input.targetTier,
         billingPeriod: input.billingPeriod,
         invoiceUrl: result.invoiceUrl,
@@ -181,7 +186,7 @@ export class PaymentService {
    */
   async activateSubscriptionFromWebhook(params: {
     gatewayRef: string
-    gateway: 'stripe' | 'xendit'
+    gateway: 'stripe' | 'xendit' | 'midtrans'
     status: 'paid'
     rawWebhook: object
   }) {

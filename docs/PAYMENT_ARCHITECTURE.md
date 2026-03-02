@@ -2,12 +2,12 @@
 
 ## Summary
 
-Production-ready payment system with Stripe (Card, Subscription) and Xendit (Invoice, VA, E-wallet, QRIS). All payment status updates occur **only via webhooks** with signature verification and idempotency.
+Production-ready payment system with Stripe (Card, Subscription), Xendit (Invoice, VA, E-wallet, QRIS), and Midtrans (Snap: VA, E-wallet, QRIS, card). All payment status updates occur **only via webhooks** with signature verification and idempotency.
 
 ## Core Features
 
 - **Unified `/api/v1/payments/create`** – Single endpoint for all payment creation
-- **Gateway abstraction** – Stripe and Xendit behind a common interface
+- **Gateway abstraction** – Stripe, Xendit, and Midtrans behind a common interface
 - **Webhook-only activation** – Subscription activates only when webhook confirms PAID
 - **Realtime updates** – Socket.IO emits `subscription:updated` to connected clients
 - **Pro trial** – Direct activation (no gateway) for 7-day free trial
@@ -25,8 +25,9 @@ Production-ready payment system with Stripe (Card, Subscription) and Xendit (Inv
 
 ```
 User selects plan → Payment modal (gateway selector) → POST /payments/create
-  → Stripe: redirect to Checkout
-  → Xendit: redirect to Invoice URL
+  → Stripe: redirect to Checkout (dev popup)
+  → Xendit: dev popup (in development)
+  → Midtrans: redirect to Snap payment page
   → Pro Trial: direct activation
   → Webhook received → signature verified → idempotent handler → subscription activated
   → Socket.IO emits to user room → Frontend updates instantly
@@ -35,7 +36,7 @@ User selects plan → Payment modal (gateway selector) → POST /payments/create
 ## Security Rules
 
 - **Webhook-only updates** – No frontend-driven success logic
-- **Signature verification** – Stripe (webhook secret), Xendit (callback token)
+- **Signature verification** – Stripe (webhook secret), Xendit (callback token), Midtrans (SHA512 signature)
 - **Idempotency** – `gatewayRef` unique constraint prevents double processing
 - **Raw payload storage** – `rawRequest`, `rawResponse`, `rawWebhook` in `payments` table
 
@@ -47,7 +48,7 @@ User selects plan → Payment modal (gateway selector) → POST /payments/create
 |--------------|--------|--------------------------------|
 | id           | string | Primary key                    |
 | userId       | string | FK to users                    |
-| gateway      | string | 'stripe' \| 'xendit'           |
+| gateway      | string | 'stripe' \| 'xendit' \| 'midtrans' |
 | gatewayRef   | string | External ID (idempotency key)  |
 | method       | string | 'card' \| 'invoice' \| etc.    |
 | status       | string | 'pending' \| 'paid' \| 'failed'|
@@ -74,6 +75,10 @@ STRIPE_PRICE_PRO_PLUS_YEARLY=price_...
 XENDIT_SECRET_KEY=xnd_...
 XENDIT_WEBHOOK_TOKEN=...
 
+# Midtrans
+MIDTRANS_SERVER_KEY=SB-Mid-server-...
+MIDTRANS_IS_PRODUCTION=false
+
 # App
 FRONTEND_URL=http://localhost:5173
 ```
@@ -82,6 +87,9 @@ FRONTEND_URL=http://localhost:5173
 
 - `POST /webhook/stripe` – Raw body, Stripe signature verification
 - `POST /webhook/xendit` – JSON body, callback token verification
+- `POST /webhook/midtrans` – JSON body, SHA512 signature verification
+
+**Midtrans Dashboard:** Configure Payment Notification URL to `https://your-api.com/webhook/midtrans` and Finish Redirect URL to `https://your-app.com/transactions?midtransPayment=success`.
 
 ## Migration
 

@@ -150,6 +150,40 @@ describe('Payment API Endpoints', () => {
       expect(res.body.data.invoiceUrl).toBeDefined()
     })
 
+    it('should return 200 for Midtrans payment', async () => {
+      const { createMidtransSnapTransaction } = await import(
+        '../../src/gateways/midtrans.gateway'
+      )
+      const user = createMockUser({
+        subscription: createMockSubscription({ tier: 'free' }),
+      })
+      prismaMock.user.findUnique.mockResolvedValue(user)
+      prismaMock.payment.findUnique.mockResolvedValue(null)
+      prismaMock.payment.create.mockResolvedValue(
+        createMockPayment({ gatewayRef: 'wlw_test_123' })
+      )
+      ;(createMidtransSnapTransaction as jest.Mock).mockResolvedValue({
+        paymentId: 'snap_token_xxx',
+        gatewayRef: 'wlw_test_123',
+        status: 'pending',
+        redirectUrl: 'https://app.sandbox.midtrans.com/snap/v2/vtweb/xxx',
+      })
+
+      const res = await request
+        .post('/api/v1/payments/create')
+        .set('Cookie', `accessToken=${token}`)
+        .send({
+          targetTier: 'pro',
+          billingPeriod: 'monthly',
+          gateway: 'midtrans',
+          method: 'invoice',
+        })
+        .expect(200)
+
+      expect(res.body.success).toBe(true)
+      expect(res.body.data.redirectUrl).toBeDefined()
+    })
+
     it('should return 400 for invalid validation', async () => {
       const res = await request
         .post('/api/v1/payments/create')

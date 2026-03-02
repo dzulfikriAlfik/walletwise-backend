@@ -246,6 +246,37 @@ describe('PaymentService', () => {
       expect(result.paymentId).toBe('pay-pending')
     })
 
+    it('should create Midtrans payment', async () => {
+      const { createMidtransSnapTransaction } = await import(
+        '../../src/gateways/midtrans.gateway'
+      )
+      const user = createMockUser({
+        subscription: createMockSubscription({ tier: 'free' }),
+      })
+      prismaMock.user.findUnique.mockResolvedValue(user)
+      prismaMock.payment.findUnique.mockResolvedValue(null)
+      prismaMock.payment.create.mockResolvedValue(
+        createMockPayment({ gatewayRef: 'wlw_test_123' })
+      )
+      ;(createMidtransSnapTransaction as jest.Mock).mockResolvedValue({
+        paymentId: 'snap_token_xxx',
+        gatewayRef: 'wlw_test_123',
+        status: 'pending',
+        redirectUrl: 'https://app.sandbox.midtrans.com/snap/v2/vtweb/xxx',
+      })
+
+      const result = await paymentService.createPayment({
+        userId: 'test-user-id',
+        targetTier: 'pro',
+        billingPeriod: 'monthly',
+        gateway: 'midtrans',
+        method: 'invoice',
+      })
+
+      expect(result.gatewayRef).toBe('wlw_test_123')
+      expect(result.redirectUrl).toBeDefined()
+    })
+
     it('should create pro_plus yearly payment', async () => {
       const { createStripeCheckout } = await import(
         '../../src/gateways/stripe.gateway'

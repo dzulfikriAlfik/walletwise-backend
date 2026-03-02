@@ -1,9 +1,10 @@
 /**
  * Webhook Controller
- * Handles Stripe and Xendit webhooks with signature verification
+ * Handles Stripe, Xendit, and Midtrans webhooks with signature verification
  * All payment status updates ONLY from webhooks
  */
 
+import crypto from 'node:crypto'
 import type { Request, Response } from 'express'
 import Stripe from 'stripe'
 import { env } from '../config/env.js'
@@ -95,6 +96,75 @@ export class WebhookController {
       const result = await paymentService.activateSubscriptionFromWebhook({
         gatewayRef,
         gateway: 'xendit',
+        status: 'paid',
+        rawWebhook: payload,
+      })
+
+      if (result) {
+        const io = (global as unknown as { io?: { to: (room: string) => { emit: (ev: string, data: unknown) => void } } }).io
+        if (io) {
+          io.to(`user:${result.userId}`).emit('subscription:updated', {
+            tier: result.tier,
+            isActive: true,
+          })
+        }
+      }
+    }
+
+    res.status(200).json({ received: true })
+  }
+
+  /**
+   * Midtrans webhook - uses signature_key verification
+   * Signature: SHA512(order_id + status_code + gross_amount + serverKey)
+   */
+  async midtrans(req: Request, res: Response): Promise<void> {
+    const payload = req.body as {
+      order_id?: string
+      transaction_status?: string
+      status_code?: string
+      gross_amount?: string
+      signature_key?: string
+    }
+
+    if (!payload.order_id || !payload.transaction_status) {
+      logger.warn('Midtrans webhook: missing order_id or transaction_status')
+      res.status(400).json({ error: 'Invalid payload' })
+      return
+    }
+
+    if (env.MIDTRANS_SERVER_KEY) {
+      const orderId = payload.order_id
+      const statusCode = payload.status_code ?? ''
+      const grossAmount = payload.gross_amount ?? ''
+      const serverKey = env.MIDTRANS_SERVER_KEY
+      const expectedSignature = crypto
+        .createHash('sha512')
+        .update(orderId + statusCode + grossAmount + serverKey)
+        .digest('hex')
+
+      if (payload.signature_key !== expectedSignature) {
+        logger.warn('Midtrans webhook: signature verification failed')
+        res.status(400).json({ error: 'Invalid signature' })
+        return
+      }
+    }
+
+    logger.info('Midtrans webhook received', {
+      orderId: payload.order_id,
+      transactionStatus: payload.transaction_status,
+    })
+
+    // settlement = paid (bank transfer, e-wallet, etc.), capture = paid (card)
+    const isPaid =
+      payload.transaction_status === 'settlement' || payload.transaction_status === 'capture'
+
+    if (isPaid && payload.order_id) {
+      const gatewayRef = payload.order_id
+
+      const result = await paymentService.activateSubscriptionFromWebhook({
+        gatewayRef,
+        gateway: 'midtrans',
         status: 'paid',
         rawWebhook: payload,
       })

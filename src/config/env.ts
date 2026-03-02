@@ -52,6 +52,11 @@ export const env = {
   XENDIT_SECRET_KEY: getEnv('XENDIT_SECRET_KEY', ''),
   XENDIT_WEBHOOK_TOKEN: getEnv('XENDIT_WEBHOOK_TOKEN', ''),
   
+  // Midtrans
+  MIDTRANS_SERVER_KEY: getEnv('MIDTRANS_SERVER_KEY', ''),
+  MIDTRANS_CLIENT_KEY: getEnv('MIDTRANS_CLIENT_KEY', ''),
+  MIDTRANS_IS_PRODUCTION: getEnv('MIDTRANS_IS_PRODUCTION', 'false') === 'true',
+  
   // App URLs (for redirects)
   FRONTEND_URL: getEnv('FRONTEND_URL', 'http://localhost:5173'),
   

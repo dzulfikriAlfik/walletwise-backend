@@ -11,7 +11,7 @@ import { env } from './config/env.js'
 import { errorHandler } from './middleware/error.middleware.js'
 import { requestLogger } from './middleware/logger.middleware.js'
 import v1Router from './routes/v1/index.js'
-import { stripeWebhookRouter, xenditWebhookRouter } from './routes/webhook.routes.js'
+import { stripeWebhookRouter, xenditWebhookRouter, midtransWebhookRouter } from './routes/webhook.routes.js'
 
 const app = express()
 
@@ -32,6 +32,9 @@ app.use(express.json())
 
 // Xendit webhook uses JSON body - mount after express.json()
 app.use('/webhook/xendit', xenditWebhookRouter)
+
+// Midtrans webhook uses JSON body - mount after express.json()
+app.use('/webhook/midtrans', midtransWebhookRouter)
 
 // Health check
 app.get('/health', (_req, res) => {

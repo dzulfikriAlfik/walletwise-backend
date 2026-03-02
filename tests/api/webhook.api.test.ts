@@ -1,7 +1,8 @@
 /**
- * API integration tests for Webhook endpoints (Stripe, Xendit)
+ * API integration tests for Webhook endpoints (Stripe, Xendit, Midtrans)
  */
 
+import crypto from 'node:crypto'
 import '../setup'
 import { prismaMock, resetAllMocks } from '../mocks/prisma.mock'
 import { createMockPayment, createMockUser } from '../helpers'
@@ -113,6 +114,141 @@ describe('Webhook API Endpoints', () => {
         .send({
           external_id: 'inv_123',
           status: 'PENDING',
+        })
+        .expect(200)
+
+      expect(res.body.received).toBe(true)
+    })
+  })
+
+  describe('POST /webhook/midtrans', () => {
+    function computeMidtransSignature(
+      orderId: string,
+      statusCode: string,
+      grossAmount: string,
+      serverKey: string
+    ): string {
+      return crypto
+        .createHash('sha512')
+        .update(orderId + statusCode + grossAmount + serverKey)
+        .digest('hex')
+    }
+
+    it('should return 400 when missing order_id', async () => {
+      const res = await request
+        .post('/webhook/midtrans')
+        .set('Content-Type', 'application/json')
+        .send({ transaction_status: 'settlement' })
+        .expect(400)
+
+      expect(res.body.error).toBeDefined()
+    })
+
+    it('should return 200 for valid settlement payload', async () => {
+      const orderId = 'wlw_test_123'
+      const statusCode = '200'
+      const grossAmount = '159840'
+      const serverKey = process.env.MIDTRANS_SERVER_KEY || 'SB-Mid-server-test_fake'
+      const signatureKey = computeMidtransSignature(
+        orderId,
+        statusCode,
+        grossAmount,
+        serverKey
+      )
+
+      const payment = createMockPayment({
+        id: 'pay-1',
+        gatewayRef: orderId,
+        status: 'pending',
+        userId: 'test-user-id',
+        targetTier: 'pro',
+        billingPeriod: 'monthly',
+      })
+      prismaMock.payment.findUnique.mockResolvedValue({
+        ...payment,
+        user: createMockUser(),
+      })
+      prismaMock.payment.update.mockResolvedValue(payment)
+      prismaMock.subscription.upsert.mockResolvedValue({})
+
+      const res = await request
+        .post('/webhook/midtrans')
+        .set('Content-Type', 'application/json')
+        .send({
+          order_id: orderId,
+          transaction_status: 'settlement',
+          status_code: statusCode,
+          gross_amount: grossAmount,
+          signature_key: signatureKey,
+        })
+        .expect(200)
+
+      expect(res.body.received).toBe(true)
+    })
+
+    it('should return 200 for capture payload (card payment)', async () => {
+      const orderId = 'wlw_test_456'
+      const statusCode = '200'
+      const grossAmount = '319680'
+      const serverKey = process.env.MIDTRANS_SERVER_KEY || 'SB-Mid-server-test_fake'
+      const signatureKey = computeMidtransSignature(
+        orderId,
+        statusCode,
+        grossAmount,
+        serverKey
+      )
+
+      const payment = createMockPayment({
+        id: 'pay-2',
+        gatewayRef: orderId,
+        status: 'pending',
+        userId: 'test-user-id',
+        targetTier: 'pro_plus',
+        billingPeriod: 'yearly',
+      })
+      prismaMock.payment.findUnique.mockResolvedValue({
+        ...payment,
+        user: createMockUser(),
+      })
+      prismaMock.payment.update.mockResolvedValue(payment)
+      prismaMock.subscription.upsert.mockResolvedValue({})
+
+      const res = await request
+        .post('/webhook/midtrans')
+        .set('Content-Type', 'application/json')
+        .send({
+          order_id: orderId,
+          transaction_status: 'capture',
+          status_code: statusCode,
+          gross_amount: grossAmount,
+          signature_key: signatureKey,
+        })
+        .expect(200)
+
+      expect(res.body.received).toBe(true)
+    })
+
+    it('should return 200 for pending payload (no activation)', async () => {
+      const orderId = 'wlw_test_789'
+      const statusCode = '201'
+      const grossAmount = '159840'
+      const serverKey = process.env.MIDTRANS_SERVER_KEY || 'SB-Mid-server-test_fake'
+      const signatureKey = computeMidtransSignature(
+        orderId,
+        statusCode,
+        grossAmount,
+        serverKey
+      )
+
+      const res = await request
+        .post('/webhook/midtrans')
+        .set('Content-Type', 'application/json')
+        .send({
+          order_id: orderId,
+          transaction_status: 'pending',
+          status_code: statusCode,
+          gross_amount: grossAmount,
+          signature_key: signatureKey,
         })
         .expect(200)
 

@@ -94,6 +94,9 @@ jest.mock('../../src/gateways/stripe.gateway', () => ({
 jest.mock('../../src/gateways/xendit.gateway', () => ({
   createXenditInvoice: jest.fn(),
 }))
+jest.mock('../../src/gateways/midtrans.gateway', () => ({
+  createMidtransSnapTransaction: jest.fn(),
+}))
 
 export function resetAllMocks() {
   Object.values(prismaMock).forEach((model) => {

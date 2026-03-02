@@ -7,7 +7,7 @@ import { z } from 'zod'
 export const createPaymentSchema = z.object({
   targetTier: z.enum(['pro_trial', 'pro', 'pro_plus']),
   billingPeriod: z.enum(['monthly', 'yearly']).default('monthly'),
-  gateway: z.enum(['stripe', 'xendit']),
+  gateway: z.enum(['stripe', 'xendit', 'midtrans']),
   method: z.enum(['card', 'invoice', 'va', 'ewallet', 'qris']),
 })
 

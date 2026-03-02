@@ -15,4 +15,8 @@ stripeWebhookRouter.post('/', (req, res) => webhookController.stripe(req, res))
 export const xenditWebhookRouter = Router()
 xenditWebhookRouter.post('/', (req, res) => webhookController.xendit(req, res))
 
+/** Midtrans webhook router - uses JSON body, mount after express.json() */
+export const midtransWebhookRouter = Router()
+midtransWebhookRouter.post('/', (req, res) => webhookController.midtrans(req, res))
+
 export default stripeWebhookRouter

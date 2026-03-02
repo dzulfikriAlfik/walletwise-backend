@@ -2,7 +2,7 @@
  * Payment gateway types and interfaces
  */
 
-export type PaymentGateway = 'stripe' | 'xendit'
+export type PaymentGateway = 'stripe' | 'xendit' | 'midtrans'
 export type PaymentMethod = 'card' | 'invoice' | 'va' | 'ewallet' | 'qris'
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'expired'
 
