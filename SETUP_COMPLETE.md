@@ -215,7 +215,7 @@ This backend demonstrates:
 - ✅ **Error handling** - Custom errors with proper HTTP status codes
 - ✅ **Documentation** - Clear README, code comments, API examples
 
-**For $10/hour remote positions, this level of backend quality significantly increases your chances!**
+**For $25/hour remote positions, this level of backend quality significantly increases your chances!**
 
 ---
 
