@@ -1,4 +1,12 @@
-## Bug Description
+---
+name: Bug Report
+about: Report a bug
+title: "[BUG]"
+labels: bug
+assignees: ""
+---
+
+## Description
 Clearly describe the bug.
 
 ## Steps to Reproduce
